@@ -1,21 +1,22 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 
-const geist = Geist({
-  variable: '--font-geist-sans',
+const gilroy = Plus_Jakarta_Sans({
+  variable: '--font-gilroy',
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
 })
 
 export const metadata: Metadata = {
   title: {
-    default: 'ProMedia — Sosyal Medya Büyüme Hizmetleri',
+    default: 'ProMedia — Instagram Takipçi Satın Al | Sosyal Medya Büyüme',
     template: '%s | ProMedia',
   },
   description:
-    'Instagram, TikTok ve YouTube için takipçi, beğeni ve izlenme hizmetleri. Güvenli ödeme, hızlı teslimat.',
+    'Instagram, TikTok ve YouTube için takipçi, beğeni ve izlenme hizmetleri. Güvenli ödeme, hızlı teslimat, telafi garantisi.',
 }
 
 export default function RootLayout({
@@ -24,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="tr" className={`${geist.variable} h-full antialiased`}>
+    <html lang="tr" className={`${gilroy.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <Header />
         {children}

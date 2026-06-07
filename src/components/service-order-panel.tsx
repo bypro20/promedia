@@ -5,15 +5,7 @@ import type { ServiceDefinition, PackageTier } from '@/lib/packages'
 import { getDefaultPackageId } from '@/lib/packages'
 import { formatAmount, formatPrice } from '@/lib/format'
 
-const TIER_ACTIVE: Record<PackageTier, string> = {
-  standart: 'tier-standart-active text-white shadow-lg',
-  premium: 'tier-premium-active text-white shadow-lg',
-  gercek: 'tier-gercek-active text-white shadow-lg',
-}
-
-type Props = {
-  service: ServiceDefinition
-}
+type Props = { service: ServiceDefinition }
 
 export function ServiceOrderPanel({ service }: Props) {
   const [tierId, setTierId] = useState<PackageTier>(service.defaultTier)
@@ -40,144 +32,134 @@ export function ServiceOrderPanel({ service }: Props) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-      {/* Sol — paket seçimi */}
-      <div className="sd-card p-5 sm:p-6">
-        {/* Süper Fırsatlar bandı */}
-        <div className="mb-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple/10 to-pink/10 px-4 py-2.5">
-          <span className="text-lg">🔥</span>
-          <span className="text-sm font-bold text-purple">Süper Fırsatlar</span>
-          <span className="text-xs text-muted">— En uygun paketleri seçin</span>
-        </div>
-
-        {/* 3 kademe — SosyalDigital gibi */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-          {service.tiers.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => selectTier(t.id)}
-              className={`shrink-0 rounded-full px-5 py-2.5 text-sm font-bold transition-all ${
-                tierId === t.id
-                  ? TIER_ACTIVE[t.id]
-                  : 'border-2 border-purple-light bg-white text-foreground/70 hover:border-purple'
-              }`}
-            >
-              {t.shortName}
-              {t.badge && tierId !== t.id && (
-                <span className="ml-1.5 rounded bg-orange/20 px-1.5 py-0.5 text-[10px] font-black text-orange">
-                  {t.badge}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Paket grid */}
-        <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-          {tier.packages.map((pkg) => {
-            const active = selectedPkgId === pkg.id
-            return (
-              <button
-                key={pkg.id}
-                type="button"
-                onClick={() => setSelectedPkgId(pkg.id)}
-                className={`relative flex min-h-[90px] flex-col items-center justify-center rounded-2xl border-2 px-1 py-3 transition-all ${
-                  active ? 'pkg-active scale-[1.03]' : 'border-purple-light bg-white hover:border-purple hover:shadow-md'
-                }`}
-              >
-                {pkg.popular && (
-                  <span className="absolute -top-2.5 rounded-full bg-gradient-to-r from-purple to-pink px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-white shadow-md">
-                    Çok Satan
-                  </span>
-                )}
-                {pkg.bonus && !pkg.popular && (
-                  <span className="absolute -top-2.5 rounded-full bg-green px-2 py-0.5 text-[8px] font-black text-white shadow">
-                    Bonus!
-                  </span>
-                )}
-                {!pkg.popular && !pkg.bonus && pkg.savings ? (
-                  <span className="absolute -top-2.5 rounded-full bg-orange px-1.5 py-0.5 text-[8px] font-black text-white shadow">
-                    %{pkg.savings} KAR
-                  </span>
-                ) : null}
-                <span className="text-base font-black sm:text-lg">{formatAmount(pkg.amount)}</span>
-                <span className={`pkg-price mt-0.5 text-[11px] font-semibold ${active ? '' : 'text-muted'}`}>
-                  {formatPrice(pkg.price)} ₺
-                </span>
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Özellikler */}
-        <div className="mt-5 rounded-2xl border border-purple-light bg-purple-light/40 p-4">
-          <p className="mb-3 text-sm font-bold text-purple">{tier.name}</p>
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {tier.features.map((f) => (
-              <li key={f} className="flex items-center gap-2 text-sm">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green text-white">
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </span>
-                {f}
-              </li>
-            ))}
-          </ul>
-        </div>
+    <div className="overflow-hidden rounded-2xl bg-[#282D40] shadow-[0_8px_32px_rgba(0,0,0,0.15)]">
+      {/* SD: package-tabs — dark bg, white active tab */}
+      <div className="flex overflow-x-auto scrollbar-hide">
+        {service.tiers.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => selectTier(t.id)}
+            className={`shrink-0 px-6 py-4 text-sm font-semibold transition-all ${
+              tierId === t.id
+                ? 'rounded-t-xl bg-white text-[#2A303C]'
+                : 'text-white/70 hover:text-white'
+            }`}
+          >
+            {t.shortName}
+            {t.badge && tierId !== t.id && (
+              <span className="ml-1.5 rounded bg-[#FD5501] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                {t.badge}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
-      {/* Sağ — sipariş formu */}
-      <div className="lg:sticky lg:top-24 lg:self-start">
-        <form onSubmit={handleSubmit} className="sd-card overflow-hidden">
-          <div className={`bg-gradient-to-r ${tier.color} px-5 py-4 text-white`}>
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Seçilen Paket</p>
-            <p className="text-2xl font-black">{formatPrice(selected.price)} ₺</p>
-            <p className="text-sm opacity-90">{formatAmount(selected.amount)} {service.unit}</p>
+      <div className="grid gap-6 bg-white p-5 lg:grid-cols-[1fr_320px] lg:p-6">
+        {/* Paket grid */}
+        <div>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+            {tier.packages.map((pkg) => {
+              const active = selectedPkgId === pkg.id
+              return (
+                <button
+                  key={pkg.id}
+                  type="button"
+                  onClick={() => setSelectedPkgId(pkg.id)}
+                  className={`relative flex min-h-[72px] flex-col items-center justify-center rounded-xl border-2 px-1 py-3 transition-all ${
+                    active
+                      ? 'border-[#7844E4] bg-[#7844E4] text-white shadow-md'
+                      : 'border-[#E9EBF5] bg-white hover:border-[#7844E4]'
+                  }`}
+                >
+                  {pkg.popular && (
+                    <span className="absolute -top-2 rounded-full bg-[#7844E4] px-1.5 py-0.5 text-[8px] font-bold uppercase text-white">
+                      Çok Satan
+                    </span>
+                  )}
+                  {pkg.bonus && !pkg.popular && (
+                    <span className="absolute -top-2 rounded-full bg-[#10B981] px-1.5 py-0.5 text-[8px] font-bold text-white">
+                      Bonus!
+                    </span>
+                  )}
+                  {!pkg.popular && !pkg.bonus && pkg.savings ? (
+                    <span className="absolute -top-2 rounded-full bg-[#FD5501] px-1 py-0.5 text-[8px] font-bold text-white">
+                      %{pkg.savings} KAR
+                    </span>
+                  ) : null}
+                  <span className="text-base font-bold">{formatAmount(pkg.amount)}</span>
+                  <span className={`mt-0.5 text-[11px] font-semibold ${active ? 'text-white/85' : 'text-[#666F94]'}`}>
+                    {formatPrice(pkg.price)} ₺
+                  </span>
+                </button>
+              )
+            })}
           </div>
 
-          <div className="p-5 space-y-4">
-            <div>
-              <label htmlFor="username" className="text-sm font-bold">{service.inputLabel}</label>
-              <div className="relative mt-1.5">
-                {service.inputPrefix && (
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-purple">
-                    {service.inputPrefix}
+          <div className="mt-5 rounded-xl bg-[#F0F1F9] p-4">
+            <p className="text-sm font-semibold text-[#7844E4]">{tier.name}</p>
+            <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+              {tier.features.map((f) => (
+                <li key={f} className="flex items-center gap-2 text-sm text-[#33353E]">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#10B981] text-white">
+                    <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
                   </span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Sidebar sipariş */}
+        <form onSubmit={handleSubmit} className="rounded-xl border border-[#E9EBF5] bg-[#FBFDFF] p-5">
+          <p className="text-sm font-semibold text-[#33353E]">Sipariş Özeti</p>
+          <div className="mt-3 space-y-1 text-sm text-[#666F94]">
+            <p>{formatAmount(selected.amount)} {service.unit}</p>
+            <p className="text-2xl font-bold text-[#7844E4]">{formatPrice(selected.price)} ₺</p>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-[#666F94]">
+                {service.inputLabel ?? 'Kullanıcı adı'}
+              </label>
+              <div className="flex overflow-hidden rounded-xl border border-[#E9EBF5] bg-white">
+                {service.inputPrefix && (
+                  <span className="flex items-center bg-[#F0F1F9] px-3 text-sm text-[#666F94]">{service.inputPrefix}</span>
                 )}
                 <input
-                  id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="kullaniciadi"
-                  className={`w-full rounded-xl border-2 border-purple-light py-3 text-sm outline-none focus:border-purple ${service.inputPrefix ? 'pl-8 pr-3' : 'px-3'}`}
+                  className="flex-1 px-3 py-2.5 text-sm outline-none"
                   required
                 />
               </div>
             </div>
             <div>
-              <label htmlFor="email" className="text-sm font-bold">E-posta</label>
+              <label className="mb-1 block text-xs font-semibold text-[#666F94]">E-posta</label>
               <input
-                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="ornek@email.com"
-                className="mt-1.5 w-full rounded-xl border-2 border-purple-light px-3 py-3 text-sm outline-none focus:border-purple"
-                required
+                className="w-full rounded-xl border border-[#E9EBF5] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#7844E4]"
               />
             </div>
-
-            <button type="submit" className="gradient-btn w-full rounded-xl py-4 text-base font-black text-white">
-              Satın Al
-            </button>
-
-            <p className="text-center text-[11px] text-muted">
-              🔒 3D Secure · ✓ Şifre istemiyoruz · ⚡ 0–15 dk teslimat
-            </p>
           </div>
+
+          <button
+            type="submit"
+            className="mt-4 w-full rounded-2xl bg-[#7844E4] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#6835d3]"
+          >
+            Satın Al — {formatPrice(selected.price)} ₺
+          </button>
+          <p className="mt-2 text-center text-[10px] text-[#7A7F99]">3D Secure · Şifre istemiyoruz</p>
         </form>
       </div>
     </div>

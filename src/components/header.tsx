@@ -4,15 +4,17 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { PLATFORM_SERVICES } from '@/lib/catalog'
 import { TopBar } from './top-bar'
+import { IconBell, IconCart } from './icons'
 
 const NAV = [
   { label: 'Ana Sayfa', href: '/' },
-  { label: 'Hizmetler', href: '/hizmetler' },
+  { label: 'Hizmetler', mega: true },
   { label: 'Organik Büyüme', href: '/instagram-takipci-satin-al' },
   { label: 'Blog', href: '#' },
   { label: 'Ücretsiz Araçlar', href: '#' },
 ]
 
+/** SD: .main-navbar-section — white, 65px, shadow, sticky below top bar */
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [megaOpen, setMegaOpen] = useState(false)
@@ -20,90 +22,101 @@ export function Header() {
   return (
     <>
       <TopBar />
-      <header className="sticky top-0 z-50 border-b border-border bg-white shadow-sm">
-        <div className="mx-auto flex h-[62px] max-w-7xl items-center justify-between px-4 sm:px-6">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6c3ce7] to-[#e91e8c] text-sm font-black text-white shadow-lg">
-              PM
-            </span>
-            <span className="text-xl font-black tracking-tight">
-              Pro<span className="gradient-text">Media</span>
+      <header className="sticky top-[42px] z-[999] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+        <div className="sd-container flex h-[65px] items-center justify-between gap-4">
+          {/* Logo — SD: navbar-logo.webp 140×34 */}
+          <Link href="/" className="shrink-0">
+            <span className="flex items-center gap-2">
+              <span className="flex h-[34px] w-[34px] items-center justify-center rounded-lg bg-[#7844E4] text-xs font-bold text-white">
+                PM
+              </span>
+              <span className="text-[22px] font-bold tracking-tight text-[#33353E]">
+                Pro<span className="text-[#7844E4]">Media</span>
+              </span>
             </span>
           </Link>
 
-          {/* Desktop nav */}
+          {/* Center nav — SD: 16px, font-weight 600, #33353E */}
           <nav className="hidden items-center gap-1 lg:flex">
             {NAV.map((item) =>
-              item.label === 'Hizmetler' ? (
+              item.mega ? (
                 <div
                   key={item.label}
                   className="relative"
                   onMouseEnter={() => setMegaOpen(true)}
                   onMouseLeave={() => setMegaOpen(false)}
                 >
-                  <button type="button" className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-purple-light hover:text-purple">
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 rounded-lg px-3 py-2 text-base font-semibold text-[#33353E] hover:text-[#7844E4]"
+                  >
                     Hizmetler
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                   {megaOpen && (
-                    <div className="absolute left-1/2 top-full z-50 w-[860px] -translate-x-1/2 pt-1">
-                      <div className="rounded-2xl border border-border bg-white p-6 shadow-2xl">
-                        <p className="mb-4 text-xs font-black uppercase tracking-widest text-purple">
-                          En Çok Kullanılan Kategorilerimiz
-                        </p>
-                        <div className="grid grid-cols-4 gap-5">
-                          {PLATFORM_SERVICES.map((group) => (
-                            <div key={group.platform}>
-                              <p className={`mb-2 flex items-center gap-1.5 bg-gradient-to-r ${group.color} bg-clip-text text-sm font-black text-transparent`}>
-                                {group.icon} {group.platform}
-                              </p>
-                              <ul className="space-y-0.5">
-                                {group.items.map((s) => (
-                                  <li key={s.href}>
-                                    <Link href={s.href} className="block rounded-md px-2 py-1 text-xs text-muted hover:bg-purple-light hover:font-semibold hover:text-purple">
-                                      {s.name.replace(`${group.platform} `, '')}
-                                    </Link>
-                                  </li>
-                                ))}
-                              </ul>
-                              <Link href="/hizmetler" className="mt-2 block px-2 text-xs font-bold text-purple hover:underline">
-                                Tümünü Görüntüle →
-                              </Link>
-                            </div>
-                          ))}
+                    <>
+                      <div className="fixed inset-0 top-[107px] z-40 bg-black/20" />
+                      <div className="absolute left-1/2 top-full z-50 w-[887px] -translate-x-1/2 pt-2">
+                        <div className="rounded-2xl border border-[#E9EBF5] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.15)]">
+                          <p className="mb-4 text-xs font-bold uppercase tracking-widest text-[#7844E4]">
+                            En Çok Kullanılan Kategorilerimiz
+                          </p>
+                          <div className="grid grid-cols-4 gap-5">
+                            {PLATFORM_SERVICES.slice(0, 8).map((group) => (
+                              <div key={group.platform}>
+                                <p className="mb-2 text-sm font-bold text-[#33353E]">{group.platform}</p>
+                                <ul className="space-y-0.5">
+                                  {group.items.slice(0, 9).map((s) => (
+                                    <li key={s.href}>
+                                      <Link
+                                        href={s.href}
+                                        className="block rounded-md px-2 py-1 text-xs text-[#666F94] hover:bg-[#EDE5FF] hover:font-semibold hover:text-[#7844E4]"
+                                      >
+                                        {s.name.replace(`${group.platform} `, '')}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                                <Link href="/hizmetler" className="mt-2 block px-2 text-xs font-bold text-[#7844E4] hover:underline">
+                                  Tümünü Görüntüle
+                                </Link>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </div>
               ) : (
-                <Link key={item.label} href={item.href} className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-purple-light hover:text-purple">
+                <Link
+                  key={item.label}
+                  href={item.href!}
+                  className="rounded-lg px-3 py-2 text-base font-semibold text-[#33353E] hover:text-[#7844E4]"
+                >
                   {item.label}
                 </Link>
               )
             )}
           </nav>
 
-          {/* Sağ ikonlar */}
+          {/* Right — SD: nav-pill icons + Giriş Yap */}
           <div className="flex items-center gap-2">
-            <Link href="/siparis-sorgula" className="hidden rounded-lg p-2 text-muted hover:bg-purple-light hover:text-purple sm:flex" title="Sipariş Sorgula">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </Link>
-            <Link href="/telafi-talebi" className="hidden rounded-lg p-2 text-muted hover:bg-purple-light hover:text-purple sm:flex" title="Telafi">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </Link>
-            <Link href="#" className="hidden rounded-lg px-3 py-2 text-sm font-semibold hover:text-purple sm:block">
+            <button type="button" className="sd-nav-pill hidden text-[#7844E4] sm:flex" aria-label="Bildirimler">
+              <IconBell size={20} />
+              <span className="sd-nav-badge">1</span>
+            </button>
+            <button type="button" className="sd-nav-pill hidden text-[#7844E4] sm:flex" aria-label="Sepet">
+              <IconCart size={20} />
+              <span className="sd-nav-badge">0</span>
+            </button>
+            <Link
+              href="#"
+              className="hidden rounded-2xl border-4 border-[#E4DAFA] bg-[#7844E4] px-6 py-3 text-base font-medium text-white transition-colors hover:bg-[#6835d3] md:inline-flex"
+            >
               Giriş Yap
-            </Link>
-            <Link href="/instagram-takipci-satin-al" className="gradient-btn hidden rounded-full px-5 py-2.5 text-sm font-bold text-white md:inline-flex">
-              Sipariş Ver
             </Link>
             <button
               type="button"
@@ -120,16 +133,18 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile menu */}
         {mobileOpen && (
-          <div className="border-t border-border bg-white px-4 py-4 lg:hidden">
+          <div className="border-t border-[#E9EBF5] bg-white px-4 py-4 lg:hidden">
             {NAV.map((item) => (
-              <Link key={item.label} href={item.href} className="block rounded-lg px-3 py-2.5 text-sm font-semibold hover:bg-purple-light" onClick={() => setMobileOpen(false)}>
+              <Link
+                key={item.label}
+                href={item.href ?? '/hizmetler'}
+                className="block rounded-lg px-3 py-2.5 text-sm font-semibold hover:bg-[#EDE5FF]"
+                onClick={() => setMobileOpen(false)}
+              >
                 {item.label}
               </Link>
             ))}
-            <Link href="/siparis-sorgula" className="block rounded-lg px-3 py-2.5 text-sm font-semibold hover:bg-purple-light" onClick={() => setMobileOpen(false)}>Sipariş Sorgula</Link>
-            <Link href="/telafi-talebi" className="block rounded-lg px-3 py-2.5 text-sm font-semibold hover:bg-purple-light" onClick={() => setMobileOpen(false)}>Telafi Talebi</Link>
           </div>
         )}
       </header>
