@@ -1,100 +1,87 @@
 import Link from 'next/link'
-
-const services = [
-  {
-    name: 'Instagram Takipçi',
-    desc: 'Profilinizi hızlı ve güvenli şekilde büyütün.',
-    href: '/instagram-takipci-satin-al',
-    icon: '📸',
-  },
-  {
-    name: 'Instagram Beğeni',
-    desc: 'Gönderilerinizin etkileşimini artırın.',
-    href: '#',
-    icon: '❤️',
-  },
-  {
-    name: 'TikTok Takipçi',
-    desc: 'TikTok hesabınızı geniş kitlelere ulaştırın.',
-    href: '#',
-    icon: '🎵',
-  },
-  {
-    name: 'YouTube Abone',
-    desc: 'Kanalınızın abone sayısını yükseltin.',
-    href: '#',
-    icon: '▶️',
-  },
-]
+import { PLATFORM_SERVICES, SERVICE_COUNT } from '@/lib/catalog'
+import { Testimonials } from '@/components/testimonials'
+import { FaqSection } from '@/components/faq-section'
 
 export default function HomePage() {
   return (
     <main>
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
-        <div className="max-w-2xl">
-          <p className="text-sm font-medium text-accent">ProMedia</p>
-          <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-            Sosyal medyada
+      <section className="bg-gradient-to-br from-purple-dark via-purple to-pink px-4 py-16 text-white sm:px-6 sm:py-24">
+        <div className="mx-auto max-w-7xl">
+          <span className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-bold">
+            🔥 Yeni üyelere %10 indirim
+          </span>
+          <h1 className="mt-5 text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
+            Sosyal Medyada
             <br />
-            <span className="text-muted">profesyonel büyüme</span>
+            <span className="text-pink-200">Profesyonel Büyüme</span>
           </h1>
-          <p className="mt-5 text-lg leading-relaxed text-muted">
-            Instagram, TikTok ve YouTube için takipçi, beğeni ve izlenme hizmetleri.
-            Şifre istemiyoruz, 3D Secure ödeme, hızlı teslimat.
+          <p className="mt-5 max-w-xl text-lg text-white/85">
+            Instagram, TikTok, YouTube ve {SERVICE_COUNT}+ hizmet.
+            Standart · Premium · Gerçek VIP paketler. Hızlı teslimat, telafi garantisi.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/instagram-takipci-satin-al"
-              className="rounded-lg bg-accent px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
-            >
+            <Link href="/instagram-takipci-satin-al" className="rounded-full bg-white px-7 py-3.5 text-sm font-black text-purple shadow-lg hover:bg-purple-light">
               Instagram Takipçi Al
             </Link>
-            <Link
-              href="/siparis-sorgula"
-              className="rounded-lg border border-border bg-card px-6 py-3 text-sm font-medium transition-colors hover:border-accent/30"
-            >
-              Sipariş Sorgula
+            <Link href="/hizmetler" className="rounded-full border-2 border-white/60 px-7 py-3.5 text-sm font-bold hover:bg-white/10">
+              Tüm Hizmetler
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Trust strip */}
-      <section className="border-y border-border bg-card">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-10 sm:grid-cols-4 sm:px-6">
+      {/* Güven bandı */}
+      <section className="border-b border-purple-light bg-white">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 px-4 py-8 sm:grid-cols-4 sm:px-6">
           {[
-            { label: 'Hızlı teslimat', sub: '0–15 dk başlangıç' },
-            { label: 'Güvenli ödeme', sub: '3D Secure' },
-            { label: 'Telafi garantisi', sub: '30–90 gün' },
-            { label: '7/24 destek', sub: 'Canlı yardım' },
+            { icon: '⚡', label: '0–15 dk teslimat' },
+            { icon: '🔒', label: '3D Secure ödeme' },
+            { icon: '🛡️', label: 'Telafi garantisi' },
+            { icon: '💬', label: '7/24 canlı destek' },
           ].map((item) => (
-            <div key={item.label} className="text-center sm:text-left">
-              <p className="text-sm font-medium">{item.label}</p>
-              <p className="mt-0.5 text-xs text-muted">{item.sub}</p>
+            <div key={item.label} className="flex items-center gap-3">
+              <span className="text-2xl">{item.icon}</span>
+              <span className="text-sm font-bold">{item.label}</span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Services */}
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <h2 className="text-2xl font-semibold tracking-tight">Hizmetler</h2>
-        <p className="mt-2 text-muted">İhtiyacınıza uygun paketi seçin.</p>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {services.map((s) => (
-            <Link
-              key={s.name}
-              href={s.href}
-              className="group rounded-2xl border border-border bg-card p-6 transition-all hover:border-accent/30 hover:shadow-sm"
-            >
-              <span className="text-2xl">{s.icon}</span>
-              <p className="mt-4 font-medium group-hover:text-accent">{s.name}</p>
-              <p className="mt-1 text-sm text-muted">{s.desc}</p>
-            </Link>
+      {/* Platform kartları */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+        <h2 className="text-2xl font-black">En Çok Kullanılan Kategoriler</h2>
+        <p className="mt-1 text-muted">Tüm platformlar · Standart · Premium · Gerçek VIP</p>
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {PLATFORM_SERVICES.map((group) => (
+            <div key={group.platform} className="sd-card overflow-hidden">
+              <div className={`bg-gradient-to-r ${group.color} px-5 py-4 text-white`}>
+                <span className="text-2xl">{group.icon}</span>
+                <p className="mt-1 text-lg font-black">{group.platform}</p>
+              </div>
+              <ul className="divide-y divide-purple-light p-3">
+                {group.items.map((s) => (
+                  <li key={s.href}>
+                    <Link href={s.href} className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-purple-light hover:text-purple">
+                      {s.name}
+                      <span className="text-purple">→</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
         </div>
+        <div className="mt-8 text-center">
+          <Link href="/hizmetler" className="gradient-btn inline-flex rounded-full px-8 py-3.5 text-sm font-black text-white">
+            Tüm {SERVICE_COUNT} Hizmeti Gör
+          </Link>
+        </div>
       </section>
+
+      <Testimonials />
+      <FaqSection />
     </main>
   )
 }

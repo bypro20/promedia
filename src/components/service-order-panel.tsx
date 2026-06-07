@@ -1,52 +1,71 @@
 'use client'
 
 import { useState } from 'react'
-import { INSTAGRAM_FOLLOWER_TIERS, type PackageTier } from '@/lib/packages'
+import type { ServiceDefinition, PackageTier } from '@/lib/packages'
+import { getDefaultPackageId } from '@/lib/packages'
 import { formatAmount, formatPrice } from '@/lib/format'
 
-export function ServiceOrderPanel() {
-  const [tierId, setTierId] = useState<PackageTier>('standart')
-  const [selectedPkgId, setSelectedPkgId] = useState('s-1k')
+const TIER_ACTIVE: Record<PackageTier, string> = {
+  standart: 'tier-standart-active text-white shadow-lg',
+  premium: 'tier-premium-active text-white shadow-lg',
+  gercek: 'tier-gercek-active text-white shadow-lg',
+}
+
+type Props = {
+  service: ServiceDefinition
+}
+
+export function ServiceOrderPanel({ service }: Props) {
+  const [tierId, setTierId] = useState<PackageTier>(service.defaultTier)
+  const [selectedPkgId, setSelectedPkgId] = useState(() =>
+    getDefaultPackageId(service.tiers, service.defaultTier)
+  )
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
 
-  const tier = INSTAGRAM_FOLLOWER_TIERS.find((t) => t.id === tierId)!
+  const tier = service.tiers.find((t) => t.id === tierId)!
   const selected = tier.packages.find((p) => p.id === selectedPkgId) ?? tier.packages[0]
 
   function selectTier(id: PackageTier) {
     setTierId(id)
-    const next = INSTAGRAM_FOLLOWER_TIERS.find((t) => t.id === id)!
-    const popular = next.packages.find((p) => p.popular) ?? next.packages[0]
-    setSelectedPkgId(popular.id)
+    setSelectedPkgId(getDefaultPackageId(service.tiers, id))
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!username.trim()) return
     alert(
-      `Sipariş özeti:\n${formatAmount(selected.amount)} takipçi — ${formatPrice(selected.price)} ₺\nKullanıcı: @${username.replace('@', '')}\n\nÖdeme entegrasyonu bir sonraki adımda eklenecek.`
+      `Sipariş Özeti\n\n${service.title}\n${tier.name}\n${formatAmount(selected.amount)} ${service.unit}\n${formatPrice(selected.price)} ₺\n\nÖdeme sistemi yakında aktif olacak.`
     )
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
-      <div>
-        {/* Tier tabs */}
-        <div className="flex flex-wrap gap-2">
-          {INSTAGRAM_FOLLOWER_TIERS.map((t) => (
+    <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+      {/* Sol — paket seçimi */}
+      <div className="sd-card p-5 sm:p-6">
+        {/* Süper Fırsatlar bandı */}
+        <div className="mb-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple/10 to-pink/10 px-4 py-2.5">
+          <span className="text-lg">🔥</span>
+          <span className="text-sm font-bold text-purple">Süper Fırsatlar</span>
+          <span className="text-xs text-muted">— En uygun paketleri seçin</span>
+        </div>
+
+        {/* 3 kademe — SosyalDigital gibi */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+          {service.tiers.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => selectTier(t.id)}
-              className={`relative rounded-full px-4 py-2 text-sm font-medium transition-all ${
+              className={`shrink-0 rounded-full px-5 py-2.5 text-sm font-bold transition-all ${
                 tierId === t.id
-                  ? 'bg-accent text-white shadow-sm'
-                  : 'border border-border bg-card text-muted hover:border-accent/30 hover:text-foreground'
+                  ? TIER_ACTIVE[t.id]
+                  : 'border-2 border-purple-light bg-white text-foreground/70 hover:border-purple'
               }`}
             >
-              {t.name}
+              {t.shortName}
               {t.badge && tierId !== t.id && (
-                <span className="ml-1.5 text-[10px] uppercase tracking-wide text-accent">
+                <span className="ml-1.5 rounded bg-orange/20 px-1.5 py-0.5 text-[10px] font-black text-orange">
                   {t.badge}
                 </span>
               )}
@@ -54,8 +73,8 @@ export function ServiceOrderPanel() {
           ))}
         </div>
 
-        {/* Package grid */}
-        <div className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3">
+        {/* Paket grid */}
+        <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
           {tier.packages.map((pkg) => {
             const active = selectedPkgId === pkg.id
             return (
@@ -63,99 +82,102 @@ export function ServiceOrderPanel() {
                 key={pkg.id}
                 type="button"
                 onClick={() => setSelectedPkgId(pkg.id)}
-                className={`relative flex flex-col items-center rounded-xl border px-2 py-4 transition-all ${
-                  active
-                    ? 'border-accent bg-accent-soft ring-1 ring-accent'
-                    : 'border-border bg-card hover:border-accent/40'
+                className={`relative flex min-h-[90px] flex-col items-center justify-center rounded-2xl border-2 px-1 py-3 transition-all ${
+                  active ? 'pkg-active scale-[1.03]' : 'border-purple-light bg-white hover:border-purple hover:shadow-md'
                 }`}
               >
                 {pkg.popular && (
-                  <span className="absolute -top-2 rounded-full bg-foreground px-2 py-0.5 text-[10px] font-medium text-white">
-                    Popüler
+                  <span className="absolute -top-2.5 rounded-full bg-gradient-to-r from-purple to-pink px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-white shadow-md">
+                    Çok Satan
                   </span>
                 )}
                 {pkg.bonus && !pkg.popular && (
-                  <span className="absolute -top-2 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-medium text-white">
-                    Bonus
+                  <span className="absolute -top-2.5 rounded-full bg-green px-2 py-0.5 text-[8px] font-black text-white shadow">
+                    Bonus!
                   </span>
                 )}
-                <span className="text-lg font-semibold">{formatAmount(pkg.amount)}</span>
-                <span className="mt-1 text-xs text-muted">{formatPrice(pkg.price)} ₺</span>
+                {!pkg.popular && !pkg.bonus && pkg.savings ? (
+                  <span className="absolute -top-2.5 rounded-full bg-orange px-1.5 py-0.5 text-[8px] font-black text-white shadow">
+                    %{pkg.savings} KAR
+                  </span>
+                ) : null}
+                <span className="text-base font-black sm:text-lg">{formatAmount(pkg.amount)}</span>
+                <span className={`pkg-price mt-0.5 text-[11px] font-semibold ${active ? '' : 'text-muted'}`}>
+                  {formatPrice(pkg.price)} ₺
+                </span>
               </button>
             )
           })}
         </div>
 
-        {/* Tier features */}
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-          {tier.features.map((f) => (
-            <li key={f} className="flex items-center gap-2 text-sm text-muted">
-              <svg className="h-4 w-4 shrink-0 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              {f}
-            </li>
-          ))}
-        </ul>
+        {/* Özellikler */}
+        <div className="mt-5 rounded-2xl border border-purple-light bg-purple-light/40 p-4">
+          <p className="mb-3 text-sm font-bold text-purple">{tier.name}</p>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {tier.features.map((f) => (
+              <li key={f} className="flex items-center gap-2 text-sm">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green text-white">
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </span>
+                {f}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
-      {/* Order sidebar */}
+      {/* Sağ — sipariş formu */}
       <div className="lg:sticky lg:top-24 lg:self-start">
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-2xl border border-border bg-card p-6 shadow-sm"
-        >
-          <p className="text-sm font-medium text-muted">Seçilen paket</p>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-semibold">{formatAmount(selected.amount)} takipçi</span>
-            <span className="text-2xl font-semibold text-accent">{formatPrice(selected.price)} ₺</span>
+        <form onSubmit={handleSubmit} className="sd-card overflow-hidden">
+          <div className={`bg-gradient-to-r ${tier.color} px-5 py-4 text-white`}>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Seçilen Paket</p>
+            <p className="text-2xl font-black">{formatPrice(selected.price)} ₺</p>
+            <p className="text-sm opacity-90">{formatAmount(selected.amount)} {service.unit}</p>
           </div>
-          <p className="mt-1 text-xs text-muted">{tier.name}</p>
 
-          <div className="mt-6 space-y-4">
+          <div className="p-5 space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium">
-                Instagram kullanıcı adı
-              </label>
+              <label htmlFor="username" className="text-sm font-bold">{service.inputLabel}</label>
               <div className="relative mt-1.5">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">@</span>
+                {service.inputPrefix && (
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-purple">
+                    {service.inputPrefix}
+                  </span>
+                )}
                 <input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="kullaniciadi"
-                  className="w-full rounded-lg border border-border bg-background py-2.5 pl-8 pr-3 text-sm outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent"
+                  className={`w-full rounded-xl border-2 border-purple-light py-3 text-sm outline-none focus:border-purple ${service.inputPrefix ? 'pl-8 pr-3' : 'px-3'}`}
                   required
                 />
               </div>
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium">
-                E-posta
-              </label>
+              <label htmlFor="email" className="text-sm font-bold">E-posta</label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="ornek@email.com"
-                className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent"
+                className="mt-1.5 w-full rounded-xl border-2 border-purple-light px-3 py-3 text-sm outline-none focus:border-purple"
                 required
               />
             </div>
+
+            <button type="submit" className="gradient-btn w-full rounded-xl py-4 text-base font-black text-white">
+              Satın Al
+            </button>
+
+            <p className="text-center text-[11px] text-muted">
+              🔒 3D Secure · ✓ Şifre istemiyoruz · ⚡ 0–15 dk teslimat
+            </p>
           </div>
-
-          <button
-            type="submit"
-            className="mt-6 w-full rounded-lg bg-accent py-3 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
-          >
-            Satın Al
-          </button>
-
-          <p className="mt-4 text-center text-xs leading-relaxed text-muted">
-            3D Secure ile güvenli ödeme · Şifre istemiyoruz
-          </p>
         </form>
       </div>
     </div>

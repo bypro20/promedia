@@ -6,102 +6,119 @@ export type FollowerPackage = {
   price: number
   popular?: boolean
   bonus?: boolean
+  savings?: number
 }
 
 export type TierInfo = {
   id: PackageTier
   name: string
+  shortName: string
   badge?: string
+  description: string
   features: string[]
   packages: FollowerPackage[]
+  color: string
 }
 
-export const INSTAGRAM_FOLLOWER_TIERS: TierInfo[] = [
-  {
-    id: 'standart',
-    name: 'Standart Takipçi',
-    features: [
-      'Yabancı kullanıcılar',
-      '30 gün garanti',
-      '0–15 dk başlangıç',
-      'Şifre istemiyoruz',
-    ],
-    packages: [
-      { id: 's-100', amount: 100, price: 29.9, bonus: true },
-      { id: 's-250', amount: 250, price: 49.9 },
-      { id: 's-500', amount: 500, price: 79.9 },
-      { id: 's-750', amount: 750, price: 109.9 },
-      { id: 's-1k', amount: 1000, price: 139.9, popular: true },
-      { id: 's-2k', amount: 2000, price: 249.9 },
-      { id: 's-5k', amount: 5000, price: 549.9 },
-      { id: 's-10k', amount: 10000, price: 999.9 },
-    ],
-  },
-  {
-    id: 'premium',
-    name: 'Premium Takipçi',
-    features: [
-      'Kaliteli yabancı profiller',
-      '30 gün garanti',
-      '0–15 dk başlangıç',
-      'Şifre istemiyoruz',
-    ],
-    packages: [
-      { id: 'p-100', amount: 100, price: 39.9, bonus: true },
-      { id: 'p-250', amount: 250, price: 69.9 },
-      { id: 'p-500', amount: 500, price: 109.9 },
-      { id: 'p-1k', amount: 1000, price: 189.9, popular: true },
-      { id: 'p-2k', amount: 2000, price: 329.9 },
-      { id: 'p-5k', amount: 5000, price: 749.9 },
-      { id: 'p-10k', amount: 10000, price: 1399.9 },
-    ],
-  },
-  {
-    id: 'gercek',
-    name: 'Gerçek Takipçi',
-    badge: 'Önerilen',
-    features: [
-      'Aktif yabancı hesaplar',
-      '90 gün telafi garantisi',
-      'Hızlı başlangıç',
-      'Şifre istemiyoruz',
-      'Minimum düşüş',
-    ],
-    packages: [
-      { id: 'g-100', amount: 100, price: 55.9 },
-      { id: 'g-250', amount: 250, price: 99.9 },
-      { id: 'g-500', amount: 500, price: 169.9 },
-      { id: 'g-1k', amount: 1000, price: 299.9, popular: true },
-      { id: 'g-2k', amount: 2000, price: 549.9 },
-      { id: 'g-5k', amount: 5000, price: 1199.9 },
-      { id: 'g-10k', amount: 10000, price: 2199.9 },
-    ],
-  },
-]
+export type FaqItem = { q: string; a: string }
 
-export const FAQ_ITEMS = [
-  {
-    q: 'Instagram takipçi satın almak güvenli mi?',
-    a: 'Evet. Sipariş için yalnızca kullanıcı adınız yeterlidir; şifrenizi asla istemiyoruz. Ödemeler 3D Secure ile korunur.',
-  },
-  {
-    q: 'Teslimat ne kadar sürer?',
-    a: 'Çoğu sipariş 0–15 dakika içinde başlar. Büyük paketlerde teslimat kademeli olarak tamamlanır.',
-  },
-  {
-    q: 'Takipçi düşerse ne olur?',
-    a: 'Garantili paketlerde telafi talebi oluşturabilirsiniz. Gerçek paketlerde 90 gün telafi hakkı sunuyoruz.',
-  },
-  {
-    q: 'Hangi bilgileri vermem gerekiyor?',
-    a: 'Sadece Instagram kullanıcı adınız ve geçerli bir e-posta adresi. Hesabınız gizli olmamalıdır.',
-  },
-]
+export type ServiceDefinition = {
+  slug: string
+  platform: string
+  platformSlug: string
+  title: string
+  unit: string
+  inputLabel: string
+  inputPrefix: string
+  heroGradient: string
+  platformIcon: string
+  defaultTier: PackageTier
+  tiers: TierInfo[]
+  faq: FaqItem[]
+}
 
-export const SERVICES = [
-  { name: 'Instagram Takipçi', href: '/instagram-takipci-satin-al' },
-  { name: 'Instagram Beğeni', href: '/instagram-takipci-satin-al' },
-  { name: 'TikTok Takipçi', href: '#' },
-  { name: 'YouTube Abone', href: '#' },
-  { name: 'Twitter Takipçi', href: '#' },
+export const PACKAGE_AMOUNTS = [
+  100, 250, 500, 750, 1000, 2000, 2500, 4000, 5000, 7500,
+  10000, 15000, 20000, 30000, 40000, 50000, 100000,
+] as const
+
+const SAVINGS: Record<number, number> = {
+  100: 0, 250: 8, 500: 18, 750: 24, 1000: 22, 2000: 29, 2500: 26,
+  4000: 40, 5000: 42, 7500: 44, 10000: 46, 15000: 48, 20000: 51,
+  30000: 53, 40000: 55, 50000: 61, 100000: 68,
+}
+
+function calcPrice(amount: number, basePer1k: number): number {
+  const raw = (amount / 1000) * basePer1k
+  const min = amount <= 100 ? 24.9 : amount <= 250 ? 39.9 : 49.9
+  return Math.round(Math.max(min, raw * (amount < 1000 ? 1.15 : 1)) * 100) / 100 - 0.03
+}
+
+export function buildPackages(prefix: string, basePer1k: number): FollowerPackage[] {
+  return PACKAGE_AMOUNTS.map((amount) => {
+    const savings = SAVINGS[amount]
+    return {
+      id: `${prefix}-${amount}`,
+      amount,
+      price: calcPrice(amount, basePer1k),
+      bonus: amount === 100,
+      popular: amount === 1000,
+      savings: savings > 0 ? savings : undefined,
+    }
+  })
+}
+
+/** SosyalDigital ile aynı 3 kademe: Standart · Premium · Gerçek VIP */
+export function buildThreeTiers(prefix: string, basePer1k: number, unit: string): TierInfo[] {
+  return [
+    {
+      id: 'standart',
+      name: `Standart ${unit}`,
+      shortName: 'Standart',
+      description: 'Yabancı kullanıcılar — hızlı ve uygun fiyat',
+      color: 'from-blue-500 to-indigo-600',
+      features: ['Yabancı kullanıcılar', '30 gün garantili', '0–15 dk başlangıç', 'Şifre istemiyoruz'],
+      packages: buildPackages(`${prefix}s`, basePer1k),
+    },
+    {
+      id: 'premium',
+      name: `Premium ${unit}`,
+      shortName: 'Premium',
+      description: '%100 gerçek yabancı premium profiller',
+      color: 'from-purple-600 to-violet-600',
+      features: ['%100 gerçek yabancı kullanıcılar', '30 gün garantili', '0–15 dk başlangıç', 'Şifre istemiyoruz'],
+      packages: buildPackages(`${prefix}p`, basePer1k * 1.4),
+    },
+    {
+      id: 'gercek',
+      name: `Gerçek ${unit}`,
+      shortName: 'Gerçek',
+      badge: 'VIP',
+      description: 'Minimum düşüş — 90 gün telafili',
+      color: 'from-orange-500 to-red-500',
+      features: ['%100 gerçek yabancı kullanıcılar', '90 gün telafili', 'Hızlı başlangıç', 'Minimum düşüş', 'Şifre istemiyoruz'],
+      packages: buildPackages(`${prefix}g`, basePer1k * 2.1),
+    },
+  ]
+}
+
+export function getDefaultPackageId(tiers: TierInfo[], tierId: PackageTier): string {
+  const tier = tiers.find((t) => t.id === tierId) ?? tiers[0]
+  return (tier.packages.find((p) => p.popular) ?? tier.packages[0]).id
+}
+
+export function buildFaq(platform: string, unit: string): FaqItem[] {
+  return [
+    { q: `${platform} ${unit} satın almak neden önemlidir?`, a: `${unit} sayısı hesabınızın popülerliğini artırır ve daha fazla görünürlük sağlar. Yüksek ${unit} daha fazla etkileşim getirir.` },
+    { q: 'En iyi satın alma sitesi hangisi?', a: 'ProMedia kaliteli, uygun fiyatlı ve hızlı teslimat sunar. 7/24 destek ve telafi garantisi ile hizmet verir.' },
+    { q: `${unit} satın almak erişim oranını artırır mı?`, a: 'Evet. Daha yüksek sayılar hesabınızın daha popüler görünmesini sağlar.' },
+    { q: 'Güvenli mi?', a: 'Güvenilir siteden alındığında hesabınız güvendedir. Şifre asla istenmez, 3D Secure ödeme kullanılır.' },
+  ]
+}
+
+export const TIER_COMPARE = [
+  { label: 'Garanti', standart: '30 gün', premium: '30 gün', gercek: '90 gün' },
+  { label: 'Profil tipi', standart: 'Yabancı', premium: 'Premium yabancı', gercek: 'Gerçek aktif' },
+  { label: 'Düşüş', standart: 'Normal', premium: 'Düşük', gercek: 'Minimum' },
+  { label: 'Başlangıç', standart: '0–15 dk', premium: '0–15 dk', gercek: 'Hızlı' },
 ]

@@ -1,14 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafafa;
-  --foreground: #18181b;
+  --background: #f5f3ff;
+  --foreground: #1a1033;
   --card: #ffffff;
-  --muted: #71717a;
-  --border: #e4e4e7;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-soft: #eef2ff;
+  --muted: #6b7280;
+  --border: #e4deff;
+  --purple: #7c3aed;
+  --purple-dark: #4c1d95;
+  --purple-light: #ede9fe;
+  --pink: #ec4899;
+  --orange: #f97316;
+  --green: #10b981;
 }
 
 @theme inline {
@@ -17,9 +20,12 @@
   --color-card: var(--card);
   --color-muted: var(--muted);
   --color-border: var(--border);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-soft: var(--accent-soft);
+  --color-purple: var(--purple);
+  --color-purple-dark: var(--purple-dark);
+  --color-purple-light: var(--purple-light);
+  --color-pink: var(--pink);
+  --color-orange: var(--orange);
+  --color-green: var(--green);
   --font-sans: var(--font-geist-sans);
 }
 
@@ -27,4 +33,45 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-btn {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.gradient-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
+}
+
+.tier-standart-active { background: linear-gradient(135deg, #6366f1, #3b82f6); }
+.tier-premium-active { background: linear-gradient(135deg, #9333ea, #7c3aed); }
+.tier-gercek-active { background: linear-gradient(135deg, #f97316, #ef4444); box-shadow: 0 4px 14px rgba(239,68,68,.35); }
+
+.pkg-active {
+  background: linear-gradient(145deg, #7c3aed, #9333ea);
+  color: white;
+  border-color: transparent !important;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.35);
+}
+.pkg-active .pkg-price { color: rgba(255,255,255,.85); }
+
+@keyframes pulse-soft { 0%,100%{opacity:1} 50%{opacity:.6} }
+.live-dot { animation: pulse-soft 2s ease-in-out infinite; }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+.sd-card {
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(124, 58, 237, 0.08);
 }
