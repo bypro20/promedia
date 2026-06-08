@@ -11,6 +11,22 @@ export const SMM_PANEL_PRESETS: Array<{
   note?: string
 }> = [
   {
+    id: 'sosyaldigital',
+    name: 'SosyalDigital',
+    apiUrl: 'https://sosyaldigital.com/api/v2',
+    envKey: 'SMM_KEY_SOSYALDIGITAL',
+    minDeposit: '₺100',
+    note: 'TR — geniş katalog, hızlı teslimat',
+  },
+  {
+    id: 'bayigram',
+    name: 'Bayigram',
+    apiUrl: 'https://bayigram.com/api/v2',
+    envKey: 'SMM_KEY_BAYIGRAM',
+    minDeposit: '₺50',
+    note: 'TR — uygun fiyat, Instagram/TikTok güçlü',
+  },
+  {
     id: 'medyabayim',
     name: 'MedyaBayim',
     apiUrl: 'https://medyabayim.com/api/v2',

@@ -2,6 +2,7 @@ import type { PackageTier } from '@/lib/packages'
 import type { SmmService } from './types'
 import { fetchSmmServices } from './client'
 import { getSmmProviders, isAutoCheapestEnabled } from './providers'
+import { getMappedEntry, loadMarkupConfig } from './service-map-store'
 
 const TIER_KEYWORDS: Record<PackageTier, string[]> = {
   ucuz: ['ucuz', 'cheap', 'budget', 'economy', 'low'],
@@ -166,6 +167,18 @@ export async function resolveSmmService(
   tierId: PackageTier,
   amount: number
 ): Promise<ResolvedSmmService> {
+  const dbEntry = await getMappedEntry(slug, tierId)
+  if (dbEntry) {
+    return {
+      providerId: dbEntry.providerId,
+      providerName: dbEntry.providerName,
+      serviceId: dbEntry.serviceId,
+      serviceName: dbEntry.serviceName,
+      rate: dbEntry.rate,
+      score: dbEntry.score,
+    }
+  }
+
   const explicit = readExplicitMap()
   const direct = explicit[`${slug}:${tierId}`] ?? explicit[slug]
   if (direct) {
@@ -216,9 +229,12 @@ export async function resolveSmmService(
 
   if (candidates.length === 0) {
     throw new Error(
-      `SMM servis eşleşmesi bulunamadı: ${slug} (${tierId}). SMM_SERVICE_MAP ile manuel eşleme ekleyin veya daha fazla panel API key tanımlayın.`
+      `SMM servis eşleşmesi bulunamadı: ${slug} (${tierId}). Admin → SMM Paneller'den "Tüm Servisleri Eşle" çalıştırın.`
     )
   }
+
+  const markupConfig = await loadMarkupConfig()
+  const useCheapest = markupConfig.autoCheapest ?? isAutoCheapestEnabled()
 
   candidates.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score
@@ -226,7 +242,7 @@ export async function resolveSmmService(
     if (maxScore - Math.min(a.score, b.score) > 5) {
       return b.score - a.score
     }
-    if (isAutoCheapestEnabled()) {
+    if (useCheapest) {
       return a.rate - b.rate
     }
     return b.score - a.score
