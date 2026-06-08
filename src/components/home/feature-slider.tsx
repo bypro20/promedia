@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ScrollRow } from '@/components/ui/scroll-row'
 
 const FEATURES = [
   { title: 'Takipçi Desteğiyle Hesabınızı Büyütün', text: 'Güvenli takipçi paketleriyle sosyal medyada görünürlüğünüzü artırın.', href: '/instagram-takipci-satin-al', color: '#7844E4' },
@@ -10,14 +11,14 @@ const FEATURES = [
 
 export function FeatureSlider() {
   return (
-    <section className="py-12">
+    <section className="overflow-hidden py-12">
       <div className="sd-container">
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+        <ScrollRow desktopGrid="lg:grid-cols-3 xl:grid-cols-5">
           {FEATURES.map((f) => (
             <Link
               key={f.title}
               href={f.href}
-              className="flex min-w-[260px] shrink-0 flex-col rounded-2xl bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.05)] transition-transform hover:scale-[1.02]"
+              className="flex min-w-[260px] flex-col rounded-2xl bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.05)] transition-transform hover:scale-[1.02] lg:min-w-0"
             >
               <div className="h-1 w-12 rounded-full" style={{ backgroundColor: f.color }} />
               <h3 className="mt-4 text-base font-semibold leading-snug text-[#33353E]">{f.title}</h3>
@@ -25,7 +26,7 @@ export function FeatureSlider() {
               <span className="mt-4 text-sm font-semibold text-[#7844E4]">Keşfet →</span>
             </Link>
           ))}
-        </div>
+        </ScrollRow>
       </div>
     </section>
   )

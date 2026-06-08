@@ -1,6 +1,7 @@
 import { HeroSection } from '@/components/home/hero-section'
 import { HeroSlides } from '@/components/home/hero-slides'
 import { PlatformCards } from '@/components/home/platform-cards'
+import { CheapPackages } from '@/components/home/cheap-packages'
 import { PopularPackages } from '@/components/home/popular-packages'
 import { AboutSection } from '@/components/home/about-section'
 import { FeatureSlider } from '@/components/home/feature-slider'
@@ -18,6 +19,7 @@ export default function HomePage() {
       <HeroSection />
       <HeroSlides />
       <PlatformCards />
+      <CheapPackages />
       <PopularPackages />
       <AboutSection />
       <FeatureSlider />

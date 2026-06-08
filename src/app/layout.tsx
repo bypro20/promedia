@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
-import { Header } from '@/components/header'
-import { Footer } from '@/components/footer'
+import { SiteChrome } from '@/components/site-chrome'
 
 const gilroy = Plus_Jakarta_Sans({
   variable: '--font-gilroy',
@@ -26,10 +25,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" className={`${gilroy.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">
-        <Header />
-        {children}
-        <Footer />
+      <body className="flex min-h-full flex-col bg-[#F0F1F9]">
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   )

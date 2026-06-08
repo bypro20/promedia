@@ -35,10 +35,20 @@
   --font-sans: var(--font-gilroy);
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-gilroy), system-ui, sans-serif;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+main {
+  overflow-x: hidden;
 }
 
 .sd-container {
@@ -136,5 +146,58 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { scrollbar-width: none; }
+
+/* Yatay kaydırma — sağda yarım kart kalmasın diye padding + snap */
+.sd-scroll-track {
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .sd-scroll-track {
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+.sd-scroll-row {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 1rem;
+  padding-bottom: 0.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sd-scroll-row > * {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 1024px) {
+  .sd-scroll-track--responsive {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .sd-scroll-row--responsive {
+    display: grid;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  .sd-scroll-row--responsive > * {
+    min-width: 0;
+    width: 100%;
+  }
+}
 
 .text-purple-brand { color: var(--sd-purple); }

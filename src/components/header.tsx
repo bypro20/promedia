@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { PLATFORM_SERVICES } from '@/lib/catalog'
 import { TopBar } from './top-bar'
 import { IconBell, IconCart } from './icons'
+import { AuthNav } from './auth-nav'
 
 const NAV = [
   { label: 'Ana Sayfa', href: '/' },
@@ -57,8 +58,12 @@ export function Header() {
                   </button>
                   {megaOpen && (
                     <>
-                      <div className="fixed inset-0 top-[107px] z-40 bg-black/20" />
-                      <div className="absolute left-1/2 top-full z-50 w-[887px] -translate-x-1/2 pt-2">
+                      <div
+                        className="fixed inset-0 top-[107px] z-40 bg-black/20"
+                        onClick={() => setMegaOpen(false)}
+                        aria-hidden
+                      />
+                      <div className="absolute left-1/2 top-full z-50 w-[min(887px,calc(100vw-2rem))] -translate-x-1/2 pt-2">
                         <div className="rounded-2xl border border-[#E9EBF5] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.15)]">
                           <p className="mb-4 text-xs font-bold uppercase tracking-widest text-[#7844E4]">
                             En Çok Kullanılan Kategorilerimiz
@@ -72,6 +77,7 @@ export function Header() {
                                     <li key={s.href}>
                                       <Link
                                         href={s.href}
+                                        onClick={() => setMegaOpen(false)}
                                         className="block rounded-md px-2 py-1 text-xs text-[#666F94] hover:bg-[#EDE5FF] hover:font-semibold hover:text-[#7844E4]"
                                       >
                                         {s.name.replace(`${group.platform} `, '')}
@@ -79,7 +85,11 @@ export function Header() {
                                     </li>
                                   ))}
                                 </ul>
-                                <Link href="/hizmetler" className="mt-2 block px-2 text-xs font-bold text-[#7844E4] hover:underline">
+                                <Link
+                                  href="/hizmetler"
+                                  onClick={() => setMegaOpen(false)}
+                                  className="mt-2 block px-2 text-xs font-bold text-[#7844E4] hover:underline"
+                                >
                                   Tümünü Görüntüle
                                 </Link>
                               </div>
@@ -112,12 +122,7 @@ export function Header() {
               <IconCart size={20} />
               <span className="sd-nav-badge">0</span>
             </button>
-            <Link
-              href="#"
-              className="hidden rounded-2xl border-4 border-[#E4DAFA] bg-[#7844E4] px-6 py-3 text-base font-medium text-white transition-colors hover:bg-[#6835d3] md:inline-flex"
-            >
-              Giriş Yap
-            </Link>
+            <AuthNav />
             <button
               type="button"
               className="rounded-lg p-2 lg:hidden"

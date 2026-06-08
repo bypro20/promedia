@@ -1,10 +1,12 @@
-import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
-import { getService, getAllSlugs } from '@/lib/catalog'
+import { getService } from '@/lib/catalog'
 import { ServiceOrderPanel } from '@/components/service-order-panel'
 import { FaqSection } from '@/components/faq-section'
 import { Testimonials } from '@/components/testimonials'
 import { SeoBlocks } from '@/components/seo-blocks'
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import { getAllSlugs } from '@/lib/catalog'
+import { getAudienceBadgeColor } from '@/lib/catalog'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -18,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!service) return { title: 'Bulunamadı' }
   return {
     title: `${service.title} — Hızlı Teslimat | ProMedia`,
-    description: `${service.title}. Standart, Premium ve Gerçek VIP paketler. 100–100K arası, telafi garantili, 3D Secure ödeme.`,
+    description: `${service.title}. Ucuz Global, Standart, Premium ve Gerçek VIP paketler. Telafi garantili, 3D Secure ödeme.`,
   }
 }
 
@@ -27,27 +29,41 @@ export default async function ServicePage({ params }: Props) {
   const service = getService(slug)
   if (!service) notFound()
 
+  const audienceColor = getAudienceBadgeColor(service.audience)
+
   return (
     <main>
-      <section className="border-b border-[#E9EBF5] bg-white py-8">
+      <section
+        className="border-b py-8 text-white"
+        style={{ background: `linear-gradient(135deg, ${service.platformColor} 0%, ${service.platformColor}dd 100%)` }}
+      >
         <div className="sd-container">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-[#EDE5FF] px-3 py-1 text-sm font-semibold text-[#7844E4]">
-              {service.platform}
+            <span className="rounded-full bg-white/20 px-3 py-1 text-sm font-bold backdrop-blur-sm">
+              {service.platformIcon} {service.platform}
             </span>
-            <span className="live-dot rounded-full bg-[#10B981]/20 px-2.5 py-0.5 text-xs font-semibold text-[#10B981]">
+            <span
+              className="rounded-full px-3 py-1 text-xs font-black uppercase text-white"
+              style={{ backgroundColor: audienceColor }}
+            >
+              {service.audience === 'ucuz' ? 'Ucuz Global' : service.audience === 'turk' ? 'Türk Paket' : 'Global Paket'}
+            </span>
+            <span className="live-dot rounded-full bg-white/25 px-2.5 py-0.5 text-xs font-bold">
               Canlı teslimat
             </span>
           </div>
-          <h1 className="mt-4 text-2xl font-semibold text-[#2C323E] sm:text-3xl">
+          <h1 className="mt-4 text-2xl font-black leading-tight sm:text-3xl">
             {service.title}
-            <span className="mt-1 block text-base font-normal text-[#666F94]">
-              — Hızlı Teslimat · Telafi Garantili
-            </span>
           </h1>
-          <p className="mt-3 max-w-2xl text-sm text-[#666F94]">
-            Standart, Premium ve Gerçek VIP paketler. 100&apos;den 100K&apos;ya kadar. Şifre istemiyoruz, 3D Secure ödeme.
+          <p className="mt-2 max-w-2xl text-sm font-medium text-white/90">
+            Ucuz Global · Global Standart · Premium · Gerçek VIP — 100&apos;den 100K&apos;ya.
+            Şifre istemiyoruz, 3D Secure ödeme, telafi garantili.
           </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {['Ucuz Global', 'Global Standart', 'Premium', 'Gerçek VIP'].map((t) => (
+              <span key={t} className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold">{t}</span>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -55,7 +71,7 @@ export default async function ServicePage({ params }: Props) {
         <ServiceOrderPanel service={service} />
       </section>
 
-      <SeoBlocks platform={service.platform} unit={service.unit} />
+      <SeoBlocks platform={service.platform} unit={service.unit} platformColor={service.platformColor} />
       <Testimonials />
       <FaqSection items={service.faq} />
     </main>

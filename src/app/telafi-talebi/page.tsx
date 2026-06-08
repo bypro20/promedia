@@ -1,15 +1,37 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 export default function RefillPage() {
   const [code, setCode] = useState('')
   const [email, setEmail] = useState('')
-  const [result, setResult] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setResult('Telafi sistemi henüz bağlanmadı. SMM API entegrasyonu sonrası aktif olacak.')
+    setLoading(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const res = await fetch('/api/orders/refill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code.trim(), email: email.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? 'Telafi talebi başarısız')
+      }
+      setSuccess(data.message)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Bir hata oluştu')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -32,6 +54,7 @@ export default function RefillPage() {
             placeholder="PM-123456"
             className="mt-1.5 w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent"
             required
+            disabled={loading}
           />
         </div>
         <div>
@@ -46,20 +69,29 @@ export default function RefillPage() {
             placeholder="ornek@email.com"
             className="mt-1.5 w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent"
             required
+            disabled={loading}
           />
         </div>
         <button
           type="submit"
-          className="w-full rounded-lg bg-accent py-3 text-sm font-medium text-white hover:bg-accent-hover"
+          disabled={loading}
+          className="w-full rounded-lg bg-accent py-3 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-60"
         >
-          Telafi Başlat
+          {loading ? 'Gönderiliyor…' : 'Telafi Başlat'}
         </button>
       </form>
 
-      {result && (
-        <p className="mt-6 rounded-lg border border-border bg-card p-4 text-sm text-muted">
-          {result}
-        </p>
+      {error && (
+        <p className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p>
+      )}
+
+      {success && (
+        <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+          <p>{success}</p>
+          <Link href={`/siparis-sorgula?code=${encodeURIComponent(code.trim())}`} className="mt-2 inline-block font-semibold text-accent hover:underline">
+            Siparişi sorgula →
+          </Link>
+        </div>
       )}
     </main>
   )

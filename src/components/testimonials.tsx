@@ -15,13 +15,14 @@ export function Testimonials() {
   const r = REVIEWS[active]
 
   return (
-    <section className="bg-white py-14">
+    <section className="overflow-hidden bg-white py-14">
       <div className="sd-container">
         <h2 className="text-center text-2xl font-semibold text-[#33353E]">Markamıza Güvenen Müşteri Yorumları</h2>
         <p className="mt-1 text-center text-sm text-[#666F94]">Söz bizde değil, bizi tercih edenlerde!</p>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[280px_1fr]">
-          <div className="flex flex-row gap-3 overflow-x-auto lg:flex-col lg:overflow-visible">
+          <div className="sd-scroll-track sd-scroll-track--responsive lg:mx-0 lg:px-0">
+            <div className="sd-scroll-row flex flex-row lg:flex-col lg:overflow-visible">
             {REVIEWS.map((rev, i) => (
               <button
                 key={rev.name}
@@ -40,6 +41,7 @@ export function Testimonials() {
                 </div>
               </button>
             ))}
+            </div>
           </div>
 
           <div className="rounded-2xl border border-[#E9EBF5] bg-[#FBFDFF] p-8">

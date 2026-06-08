@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ScrollRow } from '@/components/ui/scroll-row'
 
 const PLATFORMS = [
   { name: 'Instagram', sub: 'Hizmetleri', href: '/instagram-takipci-satin-al', bg: '#E1306C', text: '#fff' },
@@ -17,7 +18,7 @@ const PLATFORMS = [
 
 export function PlatformCards() {
   return (
-    <section className="py-12">
+    <section className="overflow-hidden py-12">
       <div className="sd-container">
         <div className="text-center">
           <h2 className="text-[26px] font-semibold text-[#33353E]">
@@ -28,19 +29,19 @@ export function PlatformCards() {
           </p>
         </div>
 
-        <div className="mt-8 flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <ScrollRow className="mt-8" desktopGrid="lg:grid-cols-4 xl:grid-cols-6">
           {PLATFORMS.map((p) => (
             <Link
               key={p.name}
               href={p.href}
-              className="flex h-[75px] min-w-[217px] shrink-0 flex-col justify-center rounded-[18px] px-5 transition-transform hover:scale-[1.02]"
+              className="flex h-[75px] min-w-[217px] flex-col justify-center rounded-[18px] px-5 transition-transform hover:scale-[1.02] lg:min-w-0"
               style={{ backgroundColor: p.bg, color: p.text }}
             >
               <span className="text-base font-semibold leading-tight">{p.name}</span>
               <span className="text-xs opacity-90">{p.sub}</span>
             </Link>
           ))}
-        </div>
+        </ScrollRow>
       </div>
     </section>
   )

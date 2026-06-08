@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String?
+  googleId  String?  @unique
+  name      String?
+  avatar    String?
+  role      String   @default("user")
+  balance   Float    @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders       Order[]
+  transactions Transaction[]
+  tickets      Ticket[]
+  apiKeys      UserApiKey[]
+
+  @@index([role])
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  serviceSlug   String
+  tierId        String
+  packageId     String
+  amount        Int
+  price         Float
+  target        String
+  email         String?
+  paymentStatus String   @default("paid")
+  status        String   @default("pending")
+  smmProvider   String   @default("default")
+  smmServiceId  Int?
+  smmOrderId    String?
+  smmStatus     String?
+  smmCharge     Float?
+  smmStartCount Int?
+  smmRemains    Int?
+  refillId      String?
+  refillStatus  String?
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([email])
+  @@index([status])
+  @@index([smmOrderId])
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  amount    Float
+  balance   Float
+  note      String?
+  orderId   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+}
+
+model Ticket {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject   String
+  status    String          @default("open")
+  priority  String          @default("normal")
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  messages  TicketMessage[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String?
+  isStaff   Boolean  @default(false)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+}
+
+model UserApiKey {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key       String   @unique
+  label     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  lastUsed  DateTime?
+
+  @@index([userId])
+}
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
