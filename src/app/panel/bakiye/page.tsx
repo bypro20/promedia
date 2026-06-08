@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { BANK_ACCOUNTS, paymentReference, SITE } from '@/lib/site-config'
 
 type Tx = { id: string; type: string; amount: number; note: string | null; createdAt: string }
 type Deposit = {
@@ -36,6 +37,8 @@ export default function PanelBalancePage() {
   const [reference, setReference] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [userId, setUserId] = useState('')
+  const [userEmail, setUserEmail] = useState('')
 
   function load() {
     void fetch('/api/panel/balance').then((r) => r.json()).then((d) => {
@@ -44,6 +47,8 @@ export default function PanelBalancePage() {
         setTxs(d.transactions)
         setDeposits(d.deposits)
         setPending(d.pendingDeposit)
+        setUserId(d.userId ?? '')
+        setUserEmail(d.userEmail ?? '')
       }
     })
   }
@@ -82,6 +87,31 @@ export default function PanelBalancePage() {
         </div>
 
         <div className="rounded-2xl bg-white p-6 shadow-sm lg:col-span-2">
+          <h2 className="font-bold text-[#33353E]">Ödeme Bilgileri</h2>
+          <p className="mt-1 text-xs text-[#666F94]">Önce aşağıdaki hesaba transfer yapın, ardından talep oluşturun.</p>
+          <div className="mt-4 space-y-3">
+            {BANK_ACCOUNTS.map((acc) => (
+              <div key={acc.bank} className="rounded-xl border border-[#E9EBF5] bg-[#F0F1F9] p-4 text-sm">
+                <p className="font-bold text-[#33353E]">{acc.bank}</p>
+                <p className="text-[#666F94]">{acc.holder} · {acc.branch}</p>
+                <p className="mt-1 font-mono text-xs font-bold text-[#7844E4]">{acc.iban}</p>
+              </div>
+            ))}
+          </div>
+          {userId && (
+            <p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-800">
+              <strong>Açıklama:</strong> Havale açıklamasına{' '}
+              <code className="font-mono font-bold">{paymentReference(userId, userEmail)}</code> yazın.
+            </p>
+          )}
+          <p className="mt-2 text-xs text-[#666F94]">
+            PayTR onaylandığında kredi kartı ile anında yükleme aktif olacaktır.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-3 rounded-2xl bg-white p-6 shadow-sm">
           {pending ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
               <p className="font-bold text-amber-800">Bekleyen talep: {pending.amount.toFixed(2)} ₺</p>

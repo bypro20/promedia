@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { creditBalance } from '@/lib/wallet'
+import { emailDepositApproved } from '@/lib/email'
 
 export type DepositMethod = 'havale' | 'papara' | 'eft'
 
@@ -65,6 +66,11 @@ export async function approveDeposit(depositId: string, adminNote?: string) {
       reviewedAt: new Date(),
     },
   })
+
+  const user = await prisma.user.findUnique({ where: { id: deposit.userId }, select: { email: true } })
+  if (user) {
+    void emailDepositApproved(user.email, deposit.amount, newBalance)
+  }
 
   return newBalance
 }

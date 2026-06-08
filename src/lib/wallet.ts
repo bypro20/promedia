@@ -53,3 +53,21 @@ export async function getTransactions(userId: string, limit = 50) {
     take: limit,
   })
 }
+
+/** Sipariş iadesi — bakiyeye geri yükler (bir kez) */
+export async function refundOrderBalance(userId: string, amount: number, orderCode: string, orderId: string) {
+  const existing = await prisma.transaction.findFirst({
+    where: { userId, orderId, type: 'refund' },
+  })
+  if (existing) throw new Error('Bu sipariş için iade zaten yapıldı')
+
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
+  const next = user.balance + amount
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: userId }, data: { balance: next } }),
+    prisma.transaction.create({
+      data: { userId, type: 'refund', amount, balance: next, note: `İade: ${orderCode}`, orderId },
+    }),
+  ])
+  return next
+}

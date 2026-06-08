@@ -4,6 +4,8 @@ import { prisma } from '@/lib/db'
 import { createSession, getSession, hashPassword, toSessionUser, verifyPassword } from '@/lib/auth'
 import { getClientIp } from '@/lib/client-ip'
 import { assertIpAllowed, recordLoginIp } from '@/lib/security'
+import { emailWelcome } from '@/lib/email'
+import { rateLimit } from '@/lib/api-v1-auth'
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -48,12 +50,16 @@ export async function POST(req: Request) {
       const sessionUser = toSessionUser(user)
       await createSession(sessionUser)
       await recordLoginIp(user.id, ip)
+      void emailWelcome(user.email, user.name)
       return NextResponse.json({ ok: true, user: sessionUser })
     }
 
     if (action === 'login') {
       const data = loginSchema.parse(body)
       const ip = getClientIp(req)
+      if (!rateLimit(`login:${ip ?? 'unknown'}`, 10, 60_000)) {
+        return NextResponse.json({ ok: false, error: 'Çok fazla deneme — 1 dk bekleyin' }, { status: 429 })
+      }
       try {
         await assertIpAllowed(ip)
       } catch {

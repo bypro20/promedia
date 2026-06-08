@@ -23,15 +23,6 @@ export default function AdminSupportPage() {
 
   useEffect(() => { load() }, [])
 
-  async function close(id: string) {
-    await fetch('/api/admin/tickets', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticketId: id, status: 'closed' }),
-    })
-    load()
-  }
-
   const open = tickets.filter((t) => t.status === 'open')
 
   return (
@@ -39,7 +30,7 @@ export default function AdminSupportPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-black text-[#33353E]">Destek Talepleri</h1>
         <p className="mt-1 text-sm text-[#666F94]">
-          Müşteri soruları ve teknik destek. Bakiye yükleme talepleri{' '}
+          Bakiye talepleri{' '}
           <Link href="/admin/bakiye" className="font-bold text-[#7844E4]">Bakiye Yönetimi</Link>
           {' '}sayfasındadır.
         </p>
@@ -63,33 +54,28 @@ export default function AdminSupportPage() {
       ) : (
         <ul className="space-y-3">
           {tickets.map((t) => (
-            <li key={t.id} className="rounded-2xl bg-white p-5 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold text-[#33353E]">{t.subject}</p>
-                  <p className="mt-1 text-sm text-[#666F94]">
-                    {t.user.email}{t.user.name ? ` · ${t.user.name}` : ''}
-                  </p>
-                  {t.messages[0] && (
-                    <p className="mt-2 line-clamp-2 text-sm text-[#666F94]">{t.messages[0].body}</p>
-                  )}
-                  <p className="mt-2 text-xs text-[#666F94]">
-                    {t._count.messages} mesaj · {new Date(t.createdAt).toLocaleString('tr-TR')}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
+            <li key={t.id}>
+              <Link href={`/admin/destek/${t.id}`} className="block rounded-2xl bg-white p-5 shadow-sm hover:ring-2 hover:ring-[#7844E4]/20">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-[#33353E]">{t.subject}</p>
+                    <p className="mt-1 text-sm text-[#666F94]">
+                      {t.user.email}{t.user.name ? ` · ${t.user.name}` : ''}
+                    </p>
+                    {t.messages[0] && (
+                      <p className="mt-2 line-clamp-2 text-sm text-[#666F94]">{t.messages[0].body}</p>
+                    )}
+                    <p className="mt-2 text-xs text-[#666F94]">
+                      {t._count.messages} mesaj · {new Date(t.createdAt).toLocaleString('tr-TR')}
+                    </p>
+                  </div>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
                     t.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-[#F0F1F9] text-[#666F94]'
                   }`}>
                     {t.status === 'open' ? 'Açık' : 'Kapalı'}
                   </span>
-                  {t.status === 'open' && (
-                    <button type="button" onClick={() => close(t.id)} className="rounded-lg bg-[#F0F1F9] px-3 py-1.5 text-xs font-bold text-[#666F94] hover:bg-[#E9EBF5]">
-                      Kapat
-                    </button>
-                  )}
                 </div>
-              </div>
+              </Link>
             </li>
           ))}
         </ul>

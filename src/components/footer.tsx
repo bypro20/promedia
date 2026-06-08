@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import { PLATFORM_SERVICES } from '@/lib/catalog'
+import { SITE } from '@/lib/site-config'
 
 const KURUMSAL = [
-  { label: 'Hakkımızda', href: '#' },
-  { label: 'İade Koşulları', href: '#' },
-  { label: 'Kullanım Sözleşmesi', href: '#' },
-  { label: 'İletişim', href: '#' },
+  { label: 'Hakkımızda', href: '/hakkimizda' },
+  { label: 'İade Koşulları', href: '/iade-kosullari' },
+  { label: 'Kullanım Sözleşmesi', href: '/kullanim-sozlesmesi' },
+  { label: 'İletişim', href: '/iletisim' },
   { label: 'Blog', href: '/blog' },
-  { label: 'KVKK', href: '#' },
+  { label: 'KVKK', href: '/kvkk' },
 ]
 
 export function Footer() {
@@ -21,8 +22,8 @@ export function Footer() {
             Uzman destek ekibimiz <strong>7/24</strong> hazır.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-3 text-sm font-semibold">
-            <a href="mailto:destek@promedia.com.tr" className="rounded-full bg-white/10 px-5 py-2 hover:bg-white/20">E-Posta</a>
-            <a href="#" className="rounded-full bg-white/10 px-5 py-2 hover:bg-white/20">WhatsApp</a>
+            <a href={`mailto:${SITE.email}`} className="rounded-full bg-white/10 px-5 py-2 hover:bg-white/20">E-Posta</a>
+            <a href={SITE.whatsappUrl} target="_blank" rel="noopener noreferrer" className="rounded-full bg-white/10 px-5 py-2 hover:bg-white/20">WhatsApp</a>
             <Link href="/siparis-sorgula" className="rounded-full bg-white/10 px-5 py-2 hover:bg-white/20">Sipariş Sorgula</Link>
           </div>
         </div>

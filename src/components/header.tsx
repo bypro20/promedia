@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { PLATFORM_SERVICES } from '@/lib/catalog'
 import { TopBar } from './top-bar'
 import { IconBell, IconCart } from './icons'
 import { AuthNav } from './auth-nav'
+import { getCart } from '@/lib/cart'
 
 const NAV = [
   { label: 'Ana Sayfa', href: '/' },
@@ -19,6 +20,14 @@ const NAV = [
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [megaOpen, setMegaOpen] = useState(false)
+  const [cartCount, setCartCount] = useState(0)
+
+  useEffect(() => {
+    function update() { setCartCount(getCart().length) }
+    update()
+    window.addEventListener('pm-cart-updated', update)
+    return () => window.removeEventListener('pm-cart-updated', update)
+  }, [])
 
   return (
     <>
@@ -118,10 +127,10 @@ export function Header() {
               <IconBell size={20} />
               <span className="sd-nav-badge">1</span>
             </button>
-            <button type="button" className="sd-nav-pill hidden text-[#7844E4] sm:flex" aria-label="Sepet">
+            <Link href="/sepet" className="sd-nav-pill hidden text-[#7844E4] sm:flex" aria-label="Sepet">
               <IconCart size={20} />
-              <span className="sd-nav-badge">0</span>
-            </button>
+              {cartCount > 0 && <span className="sd-nav-badge">{cartCount}</span>}
+            </Link>
             <AuthNav />
             <button
               type="button"

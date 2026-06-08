@@ -22,6 +22,8 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
       balance: fresh.balance,
+      userId: fresh.id,
+      userEmail: fresh.email,
       transactions,
       deposits,
       pendingDeposit: deposits.find((d) => d.status === 'pending') ?? null,

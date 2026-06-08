@@ -7,7 +7,7 @@ import { resolveSmmService } from '@/lib/smm/mapping'
 import { ensureSmmKeyCache } from '@/lib/smm/key-store'
 import { isDemoMode, isSmmConfigured } from '@/lib/smm/providers'
 
-import { debitBalance } from '@/lib/wallet'
+import { debitBalance, refundOrderBalance } from '@/lib/wallet'
 
 function generateOrderCode() {
   const n = Math.floor(100000 + Math.random() * 900000)
@@ -204,7 +204,9 @@ export function formatOrderForClient(order: Awaited<ReturnType<typeof lookupOrde
     status: order.status,
     smmStatus: order.smmStatus,
     serviceTitle: service?.title ?? order.serviceSlug,
+    serviceSlug: order.serviceSlug,
     tierId: order.tierId,
+    packageId: order.packageId,
     amount: order.amount,
     unit: service?.unit ?? '',
     price: order.price,
@@ -215,7 +217,111 @@ export function formatOrderForClient(order: Awaited<ReturnType<typeof lookupOrde
     refillId: order.refillId,
     refillStatus: order.refillStatus,
     errorMessage: order.errorMessage,
+    paymentStatus: order.paymentStatus,
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
   }
+}
+
+export async function getOrderForUser(code: string, userId: string) {
+  const order = await prisma.order.findUnique({ where: { code: code.trim().toUpperCase() } })
+  if (!order || order.userId !== userId) return null
+  return lookupOrder(order.code)
+}
+
+export async function adminCancelOrder(code: string) {
+  const order = await prisma.order.findUnique({ where: { code: code.trim().toUpperCase() } })
+  if (!order) throw new Error('Sipariş bulunamadı')
+  if (['completed', 'cancelled', 'refunded'].includes(order.status)) {
+    throw new Error('Bu sipariş iptal edilemez')
+  }
+  return prisma.order.update({
+    where: { id: order.id },
+    data: { status: 'cancelled', smmStatus: 'Cancelled' },
+  })
+}
+
+export async function adminRefundOrder(code: string) {
+  const order = await prisma.order.findUnique({ where: { code: code.trim().toUpperCase() } })
+  if (!order) throw new Error('Sipariş bulunamadı')
+  if (!order.userId) throw new Error('Misafir sipariş — bakiye iadesi yapılamaz')
+  if (order.status === 'refunded') throw new Error('Zaten iade edildi')
+
+  await refundOrderBalance(order.userId, order.price, order.code, order.id)
+  return prisma.order.update({
+    where: { id: order.id },
+    data: { status: 'refunded', paymentStatus: 'refunded' },
+  })
+}
+
+export async function adminResubmitOrder(code: string) {
+  const order = await prisma.order.findUnique({ where: { code: code.trim().toUpperCase() } })
+  if (!order) throw new Error('Sipariş bulunamadı')
+  if (!['failed', 'cancelled'].includes(order.status)) {
+    throw new Error('Yalnızca başarısız veya iptal siparişler yeniden gönderilebilir')
+  }
+
+  await ensureSmmKeyCache()
+
+  if (isDemoMode()) {
+    return prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: 'in_progress',
+        smmOrderId: `DEMO-${Date.now()}`,
+        smmStatus: 'In progress',
+        errorMessage: null,
+      },
+    })
+  }
+
+  const resolved = await resolveSmmService(order.serviceSlug, order.tierId as PackageTier, order.amount)
+  const smmRes = await createSmmOrder({
+    serviceId: resolved.serviceId,
+    link: order.target,
+    quantity: order.amount,
+    providerId: resolved.providerId,
+  })
+
+  if (smmRes.error || !smmRes.order) {
+    return prisma.order.update({
+      where: { id: order.id },
+      data: { errorMessage: smmRes.error ?? 'SMM yeniden gönderilemedi' },
+    })
+  }
+
+  return prisma.order.update({
+    where: { id: order.id },
+    data: {
+      status: 'processing',
+      smmProvider: resolved.providerId,
+      smmServiceId: resolved.serviceId,
+      smmOrderId: String(smmRes.order),
+      smmStatus: 'Pending',
+      errorMessage: null,
+    },
+  })
+}
+
+export async function syncPendingOrders(limit = 50) {
+  const orders = await prisma.order.findMany({
+    where: {
+      smmOrderId: { not: null },
+      status: { in: ['pending', 'processing', 'in_progress'] },
+    },
+    take: limit,
+    orderBy: { updatedAt: 'asc' },
+  })
+
+  let updated = 0
+  for (const o of orders) {
+    if (!o.smmOrderId || o.smmOrderId.startsWith('DEMO-') || isDemoMode()) continue
+    try {
+      await lookupOrder(o.code)
+      updated++
+    } catch {
+      /* skip */
+    }
+  }
+  return { checked: orders.length, updated }
 }

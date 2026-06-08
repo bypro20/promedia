@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   IconClose,
   IconDashboard,
@@ -88,6 +88,13 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
 export function PanelShell({ user, children }: Props & { children: React.ReactNode }) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [notifCount, setNotifCount] = useState(0)
+
+  useEffect(() => {
+    void fetch('/api/panel/notifications').then((r) => r.json()).then((d) => {
+      if (d.ok) setNotifCount(d.count)
+    })
+  }, [pathname])
 
   async function logout() {
     await fetch('/api/auth', { method: 'DELETE' })
@@ -172,6 +179,16 @@ export function PanelShell({ user, children }: Props & { children: React.ReactNo
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/panel/bakiye" className="relative rounded-lg p-2 text-[#666F94] hover:bg-[#F0F1F9]" aria-label="Bildirimler">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              {notifCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                  {notifCount}
+                </span>
+              )}
+            </Link>
             <div className="rounded-xl bg-[#EDE5FF] px-4 py-2 text-right">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#7844E4]">Bakiye</p>
               <p className="text-sm font-black text-[#7844E4]">{user.balance.toFixed(2)} ₺</p>

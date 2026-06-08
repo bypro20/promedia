@@ -8,6 +8,7 @@ import { formatAmount, formatPrice } from '@/lib/format'
 import { TIER_COLORS } from '@/lib/platform-colors'
 import { getAudienceBadgeColor } from '@/lib/catalog'
 import { STATUS_LABELS } from '@/lib/smm/status-labels'
+import { addToCart } from '@/lib/cart'
 
 type Props = { service: ServiceDefinition }
 
@@ -230,6 +231,16 @@ export function ServiceOrderPanel({ service }: Props) {
               >
                 Siparişi Takip Et
               </Link>
+              {!session && (
+                <Link href="/kayit" className="mt-2 inline-block w-full rounded-2xl border-2 py-3 text-sm font-black text-[#7844E4]">
+                  Kayıt Ol — Siparişlerinizi Panelden Yönetin
+                </Link>
+              )}
+              {session && (
+                <Link href={`/panel/siparisler/${result.code}`} className="mt-2 inline-block w-full text-xs font-semibold text-[#7844E4] hover:underline">
+                  Panelde görüntüle →
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={() => setResult(null)}
@@ -296,6 +307,25 @@ export function ServiceOrderPanel({ service }: Props) {
               {error && (
                 <p className="mt-3 rounded-lg bg-red-50 p-2 text-xs font-semibold text-red-600">{error}</p>
               )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  addToCart({
+                    serviceSlug: service.slug,
+                    serviceTitle: service.title,
+                    tierId,
+                    packageId: selectedPkgId,
+                    amount: selected.amount,
+                    price: selected.price,
+                    unit: service.unit,
+                  })
+                }}
+                className="mt-4 w-full rounded-2xl border-2 py-3 text-sm font-bold text-[#7844E4]"
+                style={{ borderColor: tierColor }}
+              >
+                Sepete Ekle
+              </button>
 
               <button
                 type="submit"
