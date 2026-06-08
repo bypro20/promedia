@@ -11,7 +11,9 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "seed": "npx tsx scripts/seed-admin.ts",
-    "health": "node scripts/site-health-bot.mjs"
+    "health": "node scripts/site-health-bot.mjs",
+    "team:status": "node scripts/agent-coordinator.mjs",
+    "team:dispatch": "node scripts/agent-coordinator.mjs --json"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.8.0",

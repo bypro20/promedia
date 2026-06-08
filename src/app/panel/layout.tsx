@@ -1,15 +1,11 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth'
-import { PanelSidebar } from '@/components/panel/sidebar'
+import { PanelShell } from '@/components/panel/shell'
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const user = await getSession()
   if (!user) redirect('/giris?next=/panel')
+  if (user.role === 'admin') redirect('/admin')
 
-  return (
-    <div className="flex min-h-screen bg-[#F0F1F9]">
-      <PanelSidebar user={user} />
-      <div className="flex-1 overflow-auto">{children}</div>
-    </div>
-  )
+  return <PanelShell user={user}>{children}</PanelShell>
 }

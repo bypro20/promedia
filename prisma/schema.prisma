@@ -8,24 +8,31 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String?
-  googleId  String?  @unique
-  name      String?
-  avatar    String?
-  role      String   @default("user")
-  balance   Float    @default(0)
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  email       String    @unique
+  password    String?
+  googleId    String?   @unique
+  name        String?
+  avatar      String?
+  role        String    @default("user")
+  balance     Float     @default(0)
+  active      Boolean   @default(true)
+  lastLoginIp String?
+  banReason   String?
+  bannedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  orders       Order[]
-  transactions Transaction[]
-  tickets      Ticket[]
-  apiKeys      UserApiKey[]
+  orders          Order[]
+  transactions    Transaction[]
+  tickets         Ticket[]
+  apiKeys         UserApiKey[]
+  depositRequests DepositRequest[]
+  ipBans          IpBan[]
 
   @@index([role])
+  @@index([active])
+  @@index([lastLoginIp])
 }
 
 model Order {
@@ -120,4 +127,46 @@ model SiteSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model DepositRequest {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount     Float
+  method     String    @default("havale")
+  reference  String?
+  status     String    @default("pending")
+  adminNote  String?
+  reviewedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([status])
+}
+
+model IpBan {
+  id        String   @id @default(cuid())
+  ip        String   @unique
+  reason    String?
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  bannedBy  String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([active])
+}
+
+model SecurityLog {
+  id        String   @id @default(cuid())
+  action    String
+  target    String?
+  detail    String?
+  ip        String?
+  adminId   String?
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([createdAt])
 }

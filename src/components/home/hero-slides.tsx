@@ -25,10 +25,10 @@ const SLIDES = [
     cardBg: '#FFECDF',
     linkColor: '#FD5501',
     links: [
-      { label: 'Instagram Ücretsiz Takipçi', href: '#' },
-      { label: 'Instagram Ücretsiz Beğeni', href: '#' },
-      { label: 'TikTok Ücretsiz Takipçi', href: '#' },
-      { label: 'TikTok Ücretsiz Beğeni', href: '#' },
+      { label: 'Hashtag Oluşturucu', href: '/ucretsiz-araclar/hashtag-olusturucu' },
+      { label: 'Bio Oluşturucu', href: '/ucretsiz-araclar/bio-olusturucu' },
+      { label: 'Büyüme Hesaplayıcı', href: '/ucretsiz-araclar/takipci-hesaplayici' },
+      { label: 'Tüm Araçlar', href: '/ucretsiz-araclar' },
     ],
   },
 ]

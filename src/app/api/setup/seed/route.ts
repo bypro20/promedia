@@ -15,8 +15,15 @@ export async function POST() {
 
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) {
-    await prisma.user.update({ where: { id: existing.id }, data: { role: 'admin' } })
-    return NextResponse.json({ ok: true, message: 'Admin zaten var', email })
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        role: 'admin',
+        active: true,
+        password: await hashPassword(password),
+      },
+    })
+    return NextResponse.json({ ok: true, message: 'Admin rolü ve şifre güncellendi', email })
   }
 
   await prisma.user.create({

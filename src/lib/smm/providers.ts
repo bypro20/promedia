@@ -1,4 +1,5 @@
 import type { SmmProviderConfig } from './types'
+import { getCachedSmmKey } from './key-store'
 
 /** Standart API v2 kullanan bilinen paneller — sadece API key girmeniz yeterli */
 export const SMM_PANEL_PRESETS: Array<{
@@ -91,7 +92,7 @@ function readPresetProviders(): SmmProviderConfig[] {
   const list: SmmProviderConfig[] = []
 
   for (const preset of SMM_PANEL_PRESETS) {
-    const apiKey = process.env[preset.envKey]
+    const apiKey = process.env[preset.envKey] || getCachedSmmKey(preset.envKey)
     if (apiKey) {
       list.push({
         id: preset.id,

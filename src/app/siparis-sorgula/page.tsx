@@ -24,24 +24,24 @@ type OrderData = {
 function OrderLookupForm() {
   const searchParams = useSearchParams()
   const [code, setCode] = useState('')
+  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [order, setOrder] = useState<OrderData | null>(null)
 
   useEffect(() => {
     const q = searchParams.get('code')
-    if (q) {
-      setCode(q)
-      void lookup(q)
-    }
+    if (q) setCode(q)
   }, [searchParams])
 
-  async function lookup(orderCode: string) {
+  async function lookup(orderCode: string, orderEmail: string) {
     setLoading(true)
     setError(null)
     setOrder(null)
     try {
-      const res = await fetch(`/api/orders?code=${encodeURIComponent(orderCode.trim())}`)
+      const params = new URLSearchParams({ code: orderCode.trim() })
+      if (orderEmail.trim()) params.set('email', orderEmail.trim())
+      const res = await fetch(`/api/orders?${params}`)
       const data = await res.json()
       if (!res.ok || !data.ok) {
         throw new Error(data.error ?? 'Sipariş bulunamadı')
@@ -56,7 +56,7 @@ function OrderLookupForm() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    void lookup(code)
+    void lookup(code, email)
   }
 
   return (
@@ -75,6 +75,21 @@ function OrderLookupForm() {
             className="mt-1.5 w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent"
             required
           />
+        </div>
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium">
+            Sipariş e-postası
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="siparis@example.com"
+            className="mt-1.5 w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+            required
+          />
+          <p className="mt-1 text-xs text-muted">Güvenlik için siparişte kullandığınız e-posta gerekli.</p>
         </div>
         <button
           type="submit"

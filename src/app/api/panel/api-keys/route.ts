@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import { requireSession } from '@/lib/auth'
+import { requireCustomerSession } from '@/lib/panel-auth'
 import { prisma } from '@/lib/db'
 import { randomBytes } from 'crypto'
 
 export async function GET() {
   try {
-    const user = await requireSession()
+    const user = await requireCustomerSession()
     const keys = await prisma.userApiKey.findMany({ where: { userId: user.id, active: true }, orderBy: { createdAt: 'desc' } })
     return NextResponse.json({ ok: true, keys })
   } catch {
@@ -15,7 +15,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const user = await requireSession()
+    const user = await requireCustomerSession()
     const { label } = await req.json() as { label?: string }
     const key = `pm_${randomBytes(24).toString('hex')}`
     const created = await prisma.userApiKey.create({

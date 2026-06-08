@@ -11,8 +11,8 @@ const NAV = [
   { label: 'Ana Sayfa', href: '/' },
   { label: 'Hizmetler', mega: true },
   { label: 'Organik Büyüme', href: '/instagram-takipci-satin-al' },
-  { label: 'Blog', href: '#' },
-  { label: 'Ücretsiz Araçlar', href: '#' },
+  { label: 'Blog', href: '/blog' },
+  { label: 'Ücretsiz Araçlar', href: '/ucretsiz-araclar' },
 ]
 
 /** SD: .main-navbar-section — white, 65px, shadow, sticky below top bar */

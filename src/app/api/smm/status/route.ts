@@ -1,13 +1,24 @@
 import { NextResponse } from 'next/server'
 import { fetchSmmBalance } from '@/lib/smm/client'
+import { ensureSmmKeyCache } from '@/lib/smm/key-store'
 import { listProviderSummary } from '@/lib/smm/mapping'
 import { clearServiceCache } from '@/lib/smm/mapping'
 import { getConfiguredPanelIds, getSmmProviders, isAutoCheapestEnabled, isSmmConfigured, SMM_PANEL_PRESETS } from '@/lib/smm/providers'
+import { requireAdmin } from '@/lib/auth'
 
 export async function GET(req: Request) {
+  try {
+    await requireAdmin()
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'FORBIDDEN'
+    return NextResponse.json({ ok: false, error: msg === 'UNAUTHORIZED' ? 'Giriş gerekli' : 'Yetkisiz' }, { status: msg === 'UNAUTHORIZED' ? 401 : 403 })
+  }
+
   const { searchParams } = new URL(req.url)
   const refresh = searchParams.get('refresh') === '1'
   if (refresh) clearServiceCache()
+
+  await ensureSmmKeyCache()
 
   const configured = isSmmConfigured()
   const providers = getSmmProviders()
@@ -28,7 +39,7 @@ export async function GET(req: Request) {
       ok: false,
       configured: false,
       autoCheapest: isAutoCheapestEnabled(),
-      message: 'En az bir panel API key tanımlayın (.env veya Vercel Environment Variables)',
+      message: 'En az bir panel API key tanımlayın — Admin → SMM Paneller veya Vercel env',
       presets,
       howTo: [
         '1. Aşağıdaki sitelerden birine (veya birkaçına) kayıt olun',

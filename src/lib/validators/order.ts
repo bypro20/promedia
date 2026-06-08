@@ -10,6 +10,7 @@ export const createOrderSchema = z.object({
 
 export const lookupOrderSchema = z.object({
   code: z.string().min(4).max(20),
+  email: z.string().email().optional().or(z.literal('')),
 })
 
 export const refillOrderSchema = z.object({

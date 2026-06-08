@@ -6,7 +6,7 @@ const KURUMSAL = [
   { label: 'İade Koşulları', href: '#' },
   { label: 'Kullanım Sözleşmesi', href: '#' },
   { label: 'İletişim', href: '#' },
-  { label: 'Blog', href: '#' },
+  { label: 'Blog', href: '/blog' },
   { label: 'KVKK', href: '#' },
 ]
 

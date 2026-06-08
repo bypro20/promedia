@@ -4,6 +4,7 @@ import type { PackageTier } from '@/lib/packages'
 import { createSmmOrder, fetchSmmOrderStatus, normalizeSmmStatus, requestSmmRefill } from '@/lib/smm/client'
 import { buildTargetLink } from '@/lib/smm/link'
 import { resolveSmmService } from '@/lib/smm/mapping'
+import { ensureSmmKeyCache } from '@/lib/smm/key-store'
 import { isDemoMode, isSmmConfigured } from '@/lib/smm/providers'
 
 import { debitBalance } from '@/lib/wallet'
@@ -35,6 +36,7 @@ export async function createOrder(input: {
   userId?: string
   payFromBalance?: boolean
 }) {
+  await ensureSmmKeyCache()
   const { service, tier, pkg } = findPackage(input.serviceSlug, input.tierId, input.packageId)
   const link = buildTargetLink(service, input.target)
 

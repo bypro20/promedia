@@ -1,20 +1,25 @@
 import { prisma } from '@/lib/db'
 import { createSession, toSessionUser } from '@/lib/auth'
+import { getSiteOrigin } from '@/lib/site-url'
 
 const GOOGLE_AUTH = 'https://accounts.google.com/o/oauth2/v2/auth'
 const GOOGLE_TOKEN = 'https://oauth2.googleapis.com/token'
 const GOOGLE_USER = 'https://www.googleapis.com/oauth2/v2/userinfo'
 
-function googleConfig() {
+export function isGoogleAuthConfigured() {
+  return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
+}
+
+function googleConfig(origin?: string) {
   const clientId = process.env.GOOGLE_CLIENT_ID
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  const baseUrl = origin ?? getSiteOrigin()
   if (!clientId || !clientSecret) return null
   return { clientId, clientSecret, redirectUri: `${baseUrl}/api/auth/google/callback` }
 }
 
-export function getGoogleAuthUrl(state: string) {
-  const cfg = googleConfig()
+export function getGoogleAuthUrl(state: string, origin?: string) {
+  const cfg = googleConfig(origin)
   if (!cfg) throw new Error('Google OAuth yapılandırılmadı')
 
   const params = new URLSearchParams({
@@ -28,8 +33,8 @@ export function getGoogleAuthUrl(state: string) {
   return `${GOOGLE_AUTH}?${params}`
 }
 
-export async function handleGoogleCallback(code: string) {
-  const cfg = googleConfig()
+export async function handleGoogleCallback(code: string, origin?: string) {
+  const cfg = googleConfig(origin)
   if (!cfg) throw new Error('Google OAuth yapılandırılmadı')
 
   const tokenRes = await fetch(GOOGLE_TOKEN, {
@@ -62,6 +67,8 @@ export async function handleGoogleCallback(code: string) {
   let user = await prisma.user.findFirst({
     where: { OR: [{ googleId: profile.id }, { email: profile.email.toLowerCase() }] },
   })
+
+  if (user && !user.active) throw new Error('USER_BANNED')
 
   if (user) {
     user = await prisma.user.update({

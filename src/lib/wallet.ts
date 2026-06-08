@@ -12,6 +12,27 @@ export async function creditBalance(userId: string, amount: number, note: string
   return next
 }
 
+/** Admin: bakiyeyi girilen tutara ayarlar (üzerine eklemez) */
+export async function setBalance(userId: string, newBalance: number, note: string) {
+  if (newBalance < 0) throw new Error('Bakiye negatif olamaz')
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
+  const delta = newBalance - user.balance
+  if (delta === 0) return newBalance
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: userId }, data: { balance: newBalance } }),
+    prisma.transaction.create({
+      data: {
+        userId,
+        type: 'adjustment',
+        amount: delta,
+        balance: newBalance,
+        note: note || `Bakiye ${newBalance.toFixed(2)} ₺ olarak ayarlandı`,
+      },
+    }),
+  ])
+  return newBalance
+}
+
 export async function debitBalance(userId: string, amount: number, note: string, orderId?: string) {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
   if (user.balance < amount) throw new Error('Yetersiz bakiye')

@@ -2,15 +2,22 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function RegisterPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const [googleEnabled, setGoogleEnabled] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    void fetch('/api/auth/config').then((r) => r.json()).then((d) => {
+      if (d.google) setGoogleEnabled(true)
+    })
+  }, [])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -37,13 +44,18 @@ export default function RegisterPage() {
       <h1 className="text-2xl font-black text-[#33353E]">Kayıt Ol</h1>
       <p className="mt-2 text-sm text-[#666F94]">Ücretsiz hesap — yeni üyelere özel avantajlar</p>
 
-      <a href="/api/auth/google?next=/panel" className="mt-8 flex w-full items-center justify-center gap-3 rounded-xl border border-[#E9EBF5] bg-white py-3 text-sm font-semibold hover:bg-[#F0F1F9]">
-        Google ile Kayıt Ol
-      </a>
-
-      <div className="my-4 flex items-center gap-3 text-xs text-[#666F94]">
-        <div className="h-px flex-1 bg-[#E9EBF5]" /> veya <div className="h-px flex-1 bg-[#E9EBF5]" />
-      </div>
+      {googleEnabled ? (
+        <>
+          <a href="/api/auth/google?next=/panel" className="mt-8 flex w-full items-center justify-center gap-3 rounded-xl border border-[#E9EBF5] bg-white py-3 text-sm font-semibold hover:bg-[#F0F1F9]">
+            Google ile Kayıt Ol
+          </a>
+          <div className="my-4 flex items-center gap-3 text-xs text-[#666F94]">
+            <div className="h-px flex-1 bg-[#E9EBF5]" /> veya <div className="h-px flex-1 bg-[#E9EBF5]" />
+          </div>
+        </>
+      ) : (
+        <div className="mt-8" />
+      )}
 
       <form onSubmit={submit} className="space-y-4">
         <div>
