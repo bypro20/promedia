@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
+import { WhatsAppFloat } from '@/components/marketing/whatsapp-float'
 
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -15,6 +16,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
       <Header />
       {children}
       <Footer />
+      <WhatsAppFloat />
     </>
   )
 }

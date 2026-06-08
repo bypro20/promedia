@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/auth'
 import { countPendingDeposits } from '@/lib/deposits'
 import { SUPPORT_TICKET_FILTER } from '@/lib/ticket-utils'
 import { prisma } from '@/lib/db'
+import { getProfitSummary } from '@/lib/priced-catalog'
 import { isSmmConfigured } from '@/lib/smm/providers'
 
 export async function GET() {
@@ -20,6 +21,7 @@ export async function GET() {
       recentOrders,
       recentDeposits,
       adminUser,
+      profitSummary,
     ] = await Promise.all([
       prisma.user.count({ where: { role: 'user' } }),
       prisma.user.count({ where: { role: 'admin' } }),
@@ -40,6 +42,7 @@ export async function GET() {
         include: { user: { select: { email: true, balance: true } } },
       }),
       prisma.user.findUnique({ where: { id: admin.id }, select: { balance: true, email: true } }),
+      getProfitSummary(),
     ])
 
     return NextResponse.json({
@@ -54,6 +57,10 @@ export async function GET() {
         openSupport,
         adminBalance: adminUser?.balance ?? 0,
         smmConfigured: isSmmConfigured(),
+        profitMode: profitSummary.profitMode,
+        avgMargin: profitSummary.avgMargin,
+        mappedServices: profitSummary.mappedTiers,
+        totalServiceTiers: profitSummary.totalTiers,
       },
       recentOrders,
       pendingDeposits: recentDeposits,

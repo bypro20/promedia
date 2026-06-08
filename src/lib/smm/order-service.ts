@@ -8,23 +8,27 @@ import { ensureSmmKeyCache } from '@/lib/smm/key-store'
 import { isDemoMode, isSmmConfigured } from '@/lib/smm/providers'
 
 import { debitBalance, refundOrderBalance } from '@/lib/wallet'
+import { resolveSellPrice } from '@/lib/smm/pricing-engine'
 
 function generateOrderCode() {
   const n = Math.floor(100000 + Math.random() * 900000)
   return `PM-${n}`
 }
 
-function findPackage(serviceSlug: string, tierId: PackageTier, packageId: string) {
+async function findPackage(serviceSlug: string, tierId: PackageTier, packageId: string) {
   const service = getService(serviceSlug)
   if (!service) throw new Error('Hizmet bulunamadı')
 
   const tier = service.tiers.find((t) => t.id === tierId)
   if (!tier) throw new Error('Paket kademesi bulunamadı')
 
-  const pkg = tier.packages.find((p) => p.id === packageId)
-  if (!pkg) throw new Error('Paket bulunamadı')
+  const catalogPkg = tier.packages.find((p) => p.id === packageId)
+  if (!catalogPkg) throw new Error('Paket bulunamadı')
 
-  return { service, tier, pkg }
+  const priced = await resolveSellPrice(serviceSlug, tierId, catalogPkg.amount, catalogPkg.price)
+  const pkg = { ...catalogPkg, price: priced.price }
+
+  return { service, tier, pkg, smmCost: priced.cost, margin: priced.margin }
 }
 
 export async function createOrder(input: {
@@ -37,7 +41,7 @@ export async function createOrder(input: {
   payFromBalance?: boolean
 }) {
   await ensureSmmKeyCache()
-  const { service, tier, pkg } = findPackage(input.serviceSlug, input.tierId, input.packageId)
+  const { service, tier, pkg } = await findPackage(input.serviceSlug, input.tierId, input.packageId)
   const link = buildTargetLink(service, input.target)
 
   if (input.payFromBalance && input.userId) {

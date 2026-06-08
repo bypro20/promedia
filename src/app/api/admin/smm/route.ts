@@ -162,9 +162,22 @@ export async function POST(req: Request) {
       clearMapCache()
       await refreshSmmKeyCache()
 
+      let autoMapMsg = ''
+      if (data.apiKey && isSmmConfigured()) {
+        try {
+          const result = await autoMapAllServices()
+          const existing = await loadServiceMap()
+          await saveServiceMap({ ...existing, ...result.entries })
+          clearServiceCache()
+          autoMapMsg = ` · ${result.mapped} servis otomatik eşlendi`
+        } catch {
+          autoMapMsg = ' · Manuel eşleme gerekebilir'
+        }
+      }
+
       return NextResponse.json({
         ok: true,
-        message: data.apiKey ? `${preset.name} API key kaydedildi` : 'API key silindi',
+        message: `${data.apiKey ? `${preset.name} API key kaydedildi${autoMapMsg}` : 'API key silindi'}`,
       })
     }
 

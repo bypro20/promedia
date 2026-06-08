@@ -29,12 +29,12 @@ export const DEFAULT_MARKUP: MarkupConfig = {
   usdTry: Number(process.env.SMM_USD_TRY ?? 35),
   autoCheapest: true,
   preferTurkish: true,
-  minProfitPercent: 35,
+  minProfitPercent: 40,
   tierMultipliers: {
-    ucuz: 3.2,
-    standart: 2.6,
-    premium: 2.1,
-    gercek: 1.85,
+    ucuz: 3.5,
+    standart: 2.8,
+    premium: 2.2,
+    gercek: 1.9,
   },
 }
 

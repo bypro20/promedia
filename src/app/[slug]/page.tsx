@@ -1,4 +1,4 @@
-import { getService } from '@/lib/catalog'
+import { getPricedService } from '@/lib/priced-catalog'
 import { ServiceOrderPanel } from '@/components/service-order-panel'
 import { FaqSection } from '@/components/faq-section'
 import { Testimonials } from '@/components/testimonials'
@@ -16,7 +16,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const service = getService(slug)
+  const service = await getPricedService(slug)
   if (!service) return { title: 'Bulunamadı' }
   return {
     title: `${service.title} — Hızlı Teslimat | ProMedia`,
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ServicePage({ params }: Props) {
   const { slug } = await params
-  const service = getService(slug)
+  const service = await getPricedService(slug)
   if (!service) notFound()
 
   const audienceColor = getAudienceBadgeColor(service.audience)
