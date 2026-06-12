@@ -130,16 +130,19 @@ model SiteSetting {
 }
 
 model DepositRequest {
-  id         String    @id @default(cuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount     Float
-  method     String    @default("havale")
-  reference  String?
-  status     String    @default("pending")
-  adminNote  String?
-  reviewedAt DateTime?
-  createdAt  DateTime  @default(now())
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount             Float
+  method             String    @default("havale")
+  reference          String?
+  paytrMerchantOid   String?   @unique
+  grossAmount        Float?
+  commissionAmount   Float?
+  status             String    @default("pending")
+  adminNote          String?
+  reviewedAt         DateTime?
+  createdAt          DateTime  @default(now())
 
   @@index([userId])
   @@index([status])

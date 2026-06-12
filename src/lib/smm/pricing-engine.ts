@@ -1,17 +1,21 @@
 import type { PackageTier } from '@/lib/packages'
 import type { MarkupConfig } from './service-map-store'
 import { DEFAULT_MARKUP, getMappedEntry, loadMarkupConfig } from './service-map-store'
+import { minTicketPrice } from '@/lib/min-ticket-price'
 
-export function smmCostTry(rate: number, amount: number, usdTry: number) {
+/** Toptan panel maliyeti (USD) — rate = USD / 1000 birim */
+export function smmCostUsd(rate: number, amount: number) {
   if (!Number.isFinite(rate) || rate <= 0) return 0
-  return (amount / 1000) * rate * usdTry
+  return (amount / 1000) * rate
 }
 
-function minTicketPrice(amount: number) {
-  if (amount <= 50) return 9.9
-  if (amount <= 100) return 14.9
-  if (amount <= 250) return 24.9
-  return 39.9
+export function smmCostTry(rate: number, amount: number, usdTry: number) {
+  return smmCostUsd(rate, amount) * usdTry
+}
+
+
+function minTicket(amount: number) {
+  return minTicketPrice(amount)
 }
 
 /** SMM maliyetine göre karlı satış fiyatı hesapla */
@@ -23,17 +27,16 @@ export function calcProfitablePrice(
   catalogPrice?: number
 ): number {
   const cost = smmCostTry(rate, amount, markup.usdTry)
-  if (cost <= 0) return catalogPrice ?? minTicketPrice(amount)
+  if (cost <= 0) return catalogPrice ?? minTicket(amount)
 
   const mult = markup.tierMultipliers[tierId] ?? 2.5
   const fromMultiplier = cost * mult
   const fromMinMargin = cost / (1 - markup.minProfitPercent / 100)
-  let price = Math.max(fromMultiplier, fromMinMargin, minTicketPrice(amount))
+  const minProfitable = Math.max(fromMultiplier, fromMinMargin, minTicket(amount))
 
-  // Katalog fiyatının altına düşme — marka değerini koru
-  if (catalogPrice && catalogPrice > price) {
-    price = catalogPrice
-  }
+  // Katalog yalnızca karlı fiyatın üzerindeyse kullanılır — asla zarar satışı yok
+  const price =
+    catalogPrice && catalogPrice >= minProfitable ? catalogPrice : minProfitable
 
   return Math.round(price * 100) / 100
 }

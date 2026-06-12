@@ -1,97 +1,16 @@
 import { ALL_SERVICES } from '@/lib/catalog'
 import type { PackageTier } from '@/lib/packages'
+import { calcProfitablePrice, smmCostTry } from '@/lib/smm/pricing-engine'
 import { fetchSmmServices } from './client'
+import type { SmmService } from './types'
 import { getSmmProviders } from './providers'
+import { parseServiceSlug, parseSmmRate, scoreSmmServiceName } from './service-match'
 import type { ServiceMapEntry } from './service-map-store'
 import { loadMarkupConfig } from './service-map-store'
-import type { SmmService } from './types'
-
-const TIER_KEYWORDS: Record<PackageTier, string[]> = {
-  ucuz: ['ucuz', 'cheap', 'budget', 'economy', 'low'],
-  standart: ['standart', 'standard', 'global', 'normal'],
-  premium: ['premium', 'high', 'quality'],
-  gercek: ['gercek', 'real', 'vip', 'active', 'organic'],
-}
-
-const SERVICE_KEYWORDS: Record<string, string[]> = {
-  takipci: ['takipci', 'follower', 'followers', 'subscriber', 'abone'],
-  'ucuz-takipci': ['follower', 'followers'],
-  'turk-takipci': ['turk', 'turkish', 'türk', 'follower'],
-  begeni: ['begeni', 'like', 'likes', 'heart'],
-  'ucuz-begeni': ['begeni', 'like', 'likes'],
-  'turk-begeni': ['turk', 'begeni', 'like'],
-  izlenme: ['izlenme', 'view', 'views', 'watch'],
-  'ucuz-izlenme': ['view', 'views'],
-  'reels-izlenme': ['reels', 'view'],
-  'hikaye-izlenme': ['story', 'hikaye', 'view'],
-  yorum: ['yorum', 'comment', 'comments'],
-  'turk-yorum': ['turk', 'yorum', 'comment'],
-  kaydetme: ['save', 'kaydet'],
-  etkilesim: ['engagement', 'etkilesim'],
-  abone: ['subscriber', 'abone'],
-  'ucuz-abone': ['subscriber', 'abone'],
-  'turk-abone': ['turk', 'abone', 'subscriber'],
-  retweet: ['retweet', 'repost'],
-  paylasim: ['share', 'paylasim'],
-  uye: ['member', 'uye'],
-  dinlenme: ['play', 'stream', 'dinlenme'],
-  goruntulenme: ['view', 'goruntulenme'],
-  reaksiyon: ['reaction', 'reaksiyon'],
-}
-
-const PLATFORM_KEYWORDS: Record<string, string[]> = {
-  instagram: ['instagram', 'insta', 'ig'],
-  tiktok: ['tiktok', 'tt'],
-  youtube: ['youtube', 'yt'],
-  twitter: ['twitter', 'x.com', 'tweet'],
-  facebook: ['facebook', 'fb'],
-  telegram: ['telegram', 'tg'],
-  spotify: ['spotify'],
-  linkedin: ['linkedin'],
-  pinterest: ['pinterest'],
-  twitch: ['twitch'],
-  discord: ['discord'],
-  threads: ['threads'],
-  kick: ['kick'],
-  soundcloud: ['soundcloud'],
-}
-
-function parseSlug(slug: string) {
-  const match = slug.match(/^(.+)-(.+)-satin-al$/)
-  if (!match) return { platform: '', serviceKey: slug }
-  return { platform: match[1], serviceKey: match[2] }
-}
-
-function parseRate(rate?: string): number {
-  if (!rate) return Number.POSITIVE_INFINITY
-  const n = parseFloat(rate.replace(',', '.'))
-  return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY
-}
-
-function scoreName(name: string, platform: string, serviceKey: string, tierId: PackageTier): number {
-  const lower = name.toLowerCase()
-  let score = 0
-  for (const kw of PLATFORM_KEYWORDS[platform] ?? [platform]) {
-    if (lower.includes(kw)) score += 10
-  }
-  for (const kw of SERVICE_KEYWORDS[serviceKey] ?? [serviceKey.replace(/-/g, ' ')]) {
-    if (lower.includes(kw)) score += 8
-  }
-  for (const kw of TIER_KEYWORDS[tierId]) {
-    if (lower.includes(kw)) score += 5
-  }
-  if (tierId === 'ucuz' && (lower.includes('turk') || lower.includes('türk'))) score -= 6
-  if (serviceKey.includes('turk') && (lower.includes('turk') || lower.includes('türk'))) score += 6
-  if (tierId === 'gercek' && lower.includes('bot')) score -= 8
-  return score
-}
-
-function smmCostTry(rate: number, amount: number, usdTry: number) {
-  return (amount / 1000) * rate * usdTry
-}
+import { isWholesaleProvider, WHOLESALE_SCORE_BOOST } from './wholesale'
 
 function isProfitable(sellPrice: number, cost: number, minPct: number) {
-  if (sellPrice <= 0) return false
+  if (sellPrice <= 0 || cost <= 0) return false
   return ((sellPrice - cost) / sellPrice) * 100 >= minPct
 }
 
@@ -122,24 +41,25 @@ function pickBest(
   slug: string,
   tierId: PackageTier,
   amount: number,
-  sellPrice: number,
+  catalogPrice: number,
   config: Awaited<ReturnType<typeof loadMarkupConfig>>
 ): ServiceMapEntry | null {
-  const { platform, serviceKey } = parseSlug(slug)
+  const { platform, serviceKey } = parseServiceSlug(slug)
   const candidates: ServiceMapEntry[] = []
 
   for (const provider of providers) {
     const isTrPanel = ['medyabayim', 'turkiyeresellers', 'smmservisim', 'smmevi', 'sosyaldigital', 'bayigram'].includes(provider.id)
     for (const svc of provider.services) {
-      const score = scoreName(svc.name, platform, serviceKey, tierId)
+      const score = scoreSmmServiceName(svc.name, platform, serviceKey, tierId)
       const min = Number(svc.min ?? 0)
       const max = Number(svc.max ?? 999999999)
-      if (score <= 0 || amount < min || amount > max) continue
+      if (score < 0 || amount < min || amount > max) continue
 
-      const rate = parseRate(svc.rate)
+      const rate = parseSmmRate(svc.rate)
       let adjScore = score
+      if (config.preferWholesale !== false && isWholesaleProvider(provider.id)) adjScore += WHOLESALE_SCORE_BOOST
       if (config.preferTurkish && isTrPanel) adjScore += 3
-      if (serviceKey.includes('turk') && isTrPanel) adjScore += 4
+      if (serviceKey.includes('turk') && isTrPanel) adjScore += 15
 
       candidates.push({
         providerId: provider.id,
@@ -156,19 +76,25 @@ function pickBest(
 
   if (candidates.length === 0) return null
 
-  const profitable = candidates.filter((c) =>
-    isProfitable(sellPrice, smmCostTry(c.rate, amount, config.usdTry), config.minProfitPercent)
-  )
-
-  const pool = profitable.length > 0 ? profitable : candidates
-
-  pool.sort((a, b) => {
+  candidates.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score
     if (config.autoCheapest) return a.rate - b.rate
     return b.score - a.score
   })
 
-  return pool[0]
+  const topScore = candidates[0].score
+  const tierCandidates = candidates.filter((c) => c.score >= topScore - 1)
+
+  const profitable = tierCandidates.filter((c) => {
+    const sell = calcProfitablePrice(amount, c.rate, tierId, config, catalogPrice)
+    const cost = smmCostTry(c.rate, amount, config.usdTry)
+    return isProfitable(sell, cost, config.minProfitPercent)
+  })
+
+  const pool = profitable.length > 0 ? profitable : tierCandidates
+  pool.sort((a, b) => (config.autoCheapest ? a.rate - b.rate : b.score - a.score))
+
+  return pool[0] ?? null
 }
 
 export type AutoMapResult = {
@@ -197,8 +123,9 @@ export async function autoMapAllServices(): Promise<AutoMapResult> {
         continue
       }
 
+      const sell = calcProfitablePrice(refPkg.amount, picked.rate, tier.id, config, refPkg.price)
       const cost = smmCostTry(picked.rate, refPkg.amount, config.usdTry)
-      if (!isProfitable(refPkg.price, cost, config.minProfitPercent)) lowMargin++
+      if (!isProfitable(sell, cost, config.minProfitPercent)) lowMargin++
 
       entries[key] = picked
     }

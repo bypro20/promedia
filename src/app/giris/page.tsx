@@ -74,11 +74,11 @@ function LoginForm() {
       <form onSubmit={submit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium">E-posta</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1.5 w-full rounded-xl border border-[#E9EBF5] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#7844E4]" />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="mt-1.5 w-full rounded-xl border border-[#E9EBF5] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#7844E4]" />
         </div>
         <div>
           <label className="block text-sm font-medium">Şifre</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1.5 w-full rounded-xl border border-[#E9EBF5] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#7844E4]" />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" className="mt-1.5 w-full rounded-xl border border-[#E9EBF5] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#7844E4]" />
         </div>
         {error && <p className="rounded-lg bg-red-50 p-2 text-sm text-red-600">{error}</p>}
         <button type="submit" disabled={loading} className="w-full rounded-xl bg-[#7844E4] py-3 text-sm font-bold text-white disabled:opacity-60">

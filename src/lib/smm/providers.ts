@@ -1,5 +1,8 @@
 import type { SmmProviderConfig } from './types'
 import { getCachedSmmKey } from './key-store'
+import type { KeyVisibility } from './panel-key-help'
+
+export type ProviderTier = 'wholesale' | 'reseller'
 
 /** Standart API v2 kullanan bilinen paneller — sadece API key girmeniz yeterli */
 export const SMM_PANEL_PRESETS: Array<{
@@ -9,7 +12,21 @@ export const SMM_PANEL_PRESETS: Array<{
   envKey: string
   minDeposit?: string
   note?: string
+  keyVisibility?: KeyVisibility
+  recommended?: boolean
+  providerTier?: ProviderTier
 }> = [
+  {
+    id: 'prm4u',
+    name: 'PRM4U (Toptan)',
+    apiUrl: 'https://prm4u.com/api/v2',
+    envKey: 'SMM_KEY_PRM4U',
+    minDeposit: '$10',
+    note: 'Toptan — 70+ ağ, aracı panel yok, düşük maliyet',
+    keyVisibility: 'visible',
+    recommended: true,
+    providerTier: 'wholesale',
+  },
   {
     id: 'sosyaldigital',
     name: 'SosyalDigital',
@@ -17,6 +34,7 @@ export const SMM_PANEL_PRESETS: Array<{
     envKey: 'SMM_KEY_SOSYALDIGITAL',
     minDeposit: '₺100',
     note: 'TR — geniş katalog, hızlı teslimat',
+    providerTier: 'reseller',
   },
   {
     id: 'bayigram',
@@ -25,6 +43,7 @@ export const SMM_PANEL_PRESETS: Array<{
     envKey: 'SMM_KEY_BAYIGRAM',
     minDeposit: '₺50',
     note: 'TR — uygun fiyat, Instagram/TikTok güçlü',
+    providerTier: 'reseller',
   },
   {
     id: 'medyabayim',
@@ -32,7 +51,9 @@ export const SMM_PANEL_PRESETS: Array<{
     apiUrl: 'https://medyabayim.com/api/v2',
     envKey: 'SMM_KEY_MEDYABAYIM',
     minDeposit: '₺50',
-    note: 'TR — uzun süredir aktif, geniş servis listesi',
+    note: 'TR aracı — key yıldızlı',
+    keyVisibility: 'always_masked',
+    providerTier: 'reseller',
   },
   {
     id: 'turkiyeresellers',
@@ -40,7 +61,9 @@ export const SMM_PANEL_PRESETS: Array<{
     apiUrl: 'https://turkiyeresellers.com/api/v2',
     envKey: 'SMM_KEY_TURKIYERESELLERS',
     minDeposit: '₺50',
-    note: 'TR — API v3/v2, otomatik refill',
+    note: 'TR aracı — yedek panel, key görünür',
+    keyVisibility: 'visible',
+    providerTier: 'reseller',
   },
   {
     id: 'smmservisim',
@@ -48,7 +71,9 @@ export const SMM_PANEL_PRESETS: Array<{
     apiUrl: 'https://smmservisim.com/api/v2',
     envKey: 'SMM_KEY_SMMSERVISIM',
     minDeposit: '₺50',
-    note: 'TR — çoklu provider routing',
+    note: 'TR — key yıldızlı, yeni key oluştururken kopyalayın',
+    keyVisibility: 'always_masked',
+    providerTier: 'reseller',
   },
   {
     id: 'smmevi',
@@ -57,6 +82,7 @@ export const SMM_PANEL_PRESETS: Array<{
     envKey: 'SMM_KEY_SMMEVI',
     minDeposit: '₺50',
     note: 'TR — uygun fiyat',
+    providerTier: 'reseller',
   },
   {
     id: 'peakerr',
@@ -64,7 +90,9 @@ export const SMM_PANEL_PRESETS: Array<{
     apiUrl: 'https://peakerr.com/api/v2',
     envKey: 'SMM_KEY_PEAKERR',
     minDeposit: '$5',
-    note: 'Global — sık en ucuz seçenek',
+    note: 'Global aracı — key yıldızlı',
+    keyVisibility: 'always_masked',
+    providerTier: 'reseller',
   },
   {
     id: 'jap',
@@ -72,7 +100,8 @@ export const SMM_PANEL_PRESETS: Array<{
     apiUrl: 'https://justanotherpanel.com/api/v2',
     envKey: 'SMM_KEY_JAP',
     minDeposit: '$10',
-    note: 'Global — stabil, geniş katalog',
+    note: 'Global toptan aggregator — geniş katalog',
+    providerTier: 'wholesale',
   },
   {
     id: 'smmfollows',
@@ -80,7 +109,8 @@ export const SMM_PANEL_PRESETS: Array<{
     apiUrl: 'https://smmfollows.com/api/v2',
     envKey: 'SMM_KEY_SMMFOLLOWS',
     minDeposit: '$10',
-    note: 'Global — reseller dostu',
+    note: 'Global toptan — reseller dostu',
+    providerTier: 'wholesale',
   },
   {
     id: 'worldofsmm',
@@ -88,7 +118,60 @@ export const SMM_PANEL_PRESETS: Array<{
     apiUrl: 'https://worldofsmm.com/api/v2',
     envKey: 'SMM_KEY_WORLDOFSMM',
     minDeposit: '$5',
-    note: 'Global — düşük drop oranı',
+    note: 'Global toptan — düşük drop',
+    providerTier: 'wholesale',
+  },
+  {
+    id: 'bulkfollows',
+    name: 'BulkFollows (Toptan)',
+    apiUrl: 'https://bulkfollows.com/api/v2',
+    envKey: 'SMM_KEY_BULKFOLLOWS',
+    minDeposit: '$10',
+    note: 'Toptan — Spotify/SoundCloud güçlü, stabil API',
+    keyVisibility: 'visible',
+    recommended: true,
+    providerTier: 'wholesale',
+  },
+  {
+    id: 'smmkings',
+    name: 'SMMKings (Toptan)',
+    apiUrl: 'https://smmkings.com/api/v2',
+    envKey: 'SMM_KEY_SMMKINGS',
+    minDeposit: '$10',
+    note: 'Toptan — Instagram/TikTok geniş katalog',
+    keyVisibility: 'visible',
+    recommended: true,
+    providerTier: 'wholesale',
+  },
+  {
+    id: 'smmraja',
+    name: 'SMMRaja (Toptan)',
+    apiUrl: 'https://smmraja.com/api/v2',
+    envKey: 'SMM_KEY_SMMRAJA',
+    minDeposit: '$5',
+    note: 'Toptan — Telegram ve Asya pazarları',
+    keyVisibility: 'visible',
+    providerTier: 'wholesale',
+  },
+  {
+    id: 'growfollows',
+    name: 'GrowFollows (Toptan)',
+    apiUrl: 'https://growfollows.com/api/v2',
+    envKey: 'SMM_KEY_GROWFOLLOWS',
+    minDeposit: '$5',
+    note: 'Toptan — YouTube watch time ucuz',
+    keyVisibility: 'visible',
+    providerTier: 'wholesale',
+  },
+  {
+    id: 'moresmm',
+    name: 'MoreSMM (Toptan)',
+    apiUrl: 'https://moresmm.com/api/v2',
+    envKey: 'SMM_KEY_MORESMM',
+    minDeposit: '$5',
+    note: 'Toptan — dengeli fiyat, geniş servis listesi',
+    keyVisibility: 'visible',
+    providerTier: 'wholesale',
   },
 ]
 
@@ -123,11 +206,19 @@ function readPresetProviders(): SmmProviderConfig[] {
 }
 
 export function getSmmProviders(): SmmProviderConfig[] {
-  const fromJson = readProvidersJson()
-  if (fromJson.length > 0) return fromJson
+  const byId = new Map<string, SmmProviderConfig>()
 
-  const fromPresets = readPresetProviders()
-  if (fromPresets.length > 0) return fromPresets
+  for (const p of readPresetProviders()) byId.set(p.id, p)
+  for (const p of readProvidersJson()) byId.set(p.id, p)
+
+  if (byId.size > 0) {
+    const order = SMM_PANEL_PRESETS.map((p) => p.id)
+    return [...byId.values()].sort((a, b) => {
+      const ia = order.indexOf(a.id)
+      const ib = order.indexOf(b.id)
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
+    })
+  }
 
   const apiUrl = process.env.SMM_API_URL
   const apiKey = process.env.SMM_API_KEY

@@ -32,7 +32,19 @@ export default function BlogPage() {
                 <span className="rounded-full bg-[#EDE5FF] px-2.5 py-0.5">{post.category}</span>
                 <span className="text-[#666F94]">{post.readMin} dk okuma</span>
               </div>
-              <div className="mt-4 h-36 rounded-xl bg-gradient-to-br from-[#EDE5FF] to-[#E3F1FE]" />
+              <div
+                className="mt-4 flex h-36 flex-col justify-end rounded-xl p-4 text-white"
+                style={{
+                  background: `linear-gradient(135deg, ${
+                    post.category === 'Instagram' ? '#E1306C'
+                    : post.category === 'TikTok' ? '#000'
+                    : post.category === 'YouTube' ? '#FF0000'
+                    : '#7844E4'
+                  } 0%, #282D40 100%)`,
+                }}
+              >
+                <span className="text-xs font-bold uppercase tracking-wider opacity-80">{post.category}</span>
+              </div>
               <h2 className="mt-4 text-lg font-bold leading-snug text-[#33353E]">{post.title}</h2>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-[#666F94]">{post.excerpt}</p>
               <div className="mt-4 flex items-center justify-between border-t border-[#E9EBF5] pt-4">

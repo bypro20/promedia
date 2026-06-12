@@ -1,10 +1,13 @@
 import Link from 'next/link'
 import { isGoogleAuthConfigured } from '@/lib/google-auth'
+import {
+  GOOGLE_CONSOLE_JS_ORIGINS,
+  GOOGLE_CONSOLE_REDIRECT_URIS,
+} from '@/lib/google-oauth-config'
 import { getSiteOrigin } from '@/lib/site-url'
 
 export default function AdminSettingsPage() {
   const siteUrl = getSiteOrigin()
-  const googleCallback = `${siteUrl}/api/auth/google/callback`
   const googleOk = isGoogleAuthConfigured()
   const clientId = process.env.GOOGLE_CLIENT_ID ?? ''
 
@@ -38,14 +41,16 @@ export default function AdminSettingsPage() {
                   <code className="mt-1 block break-all rounded-lg bg-white px-2 py-1">{clientId}</code>
                 </li>
                 <li>
-                  <strong className="text-[#33353E]">Authorized redirect URIs</strong> bölümüne şunu ekleyin:
-                  <code className="mt-1 block break-all rounded-lg bg-white px-2 py-1">{googleCallback}</code>
+                  <strong className="text-[#33353E]">Authorized redirect URIs</strong> bölümüne şunları ekleyin:
+                  {GOOGLE_CONSOLE_REDIRECT_URIS.map((uri) => (
+                    <code key={uri} className="mt-1 block break-all rounded-lg bg-white px-2 py-1">{uri}</code>
+                  ))}
                 </li>
                 <li>
-                  <strong className="text-red-600">JavaScript origins alanına callback URL yazmayın.</strong>
-                  {' '}Orada sadece kök domain olur (path yok, sonda / yok):
-                  <code className="mt-1 block break-all rounded-lg bg-white px-2 py-1">{siteUrl}</code>
-                  Bu alan opsiyonel — boş bırakabilirsiniz.
+                  <strong className="text-[#33353E]">Authorized JavaScript origins</strong> (path yok, sonda / yok):
+                  {GOOGLE_CONSOLE_JS_ORIGINS.map((uri) => (
+                    <code key={uri} className="mt-1 block break-all rounded-lg bg-white px-2 py-1">{uri}</code>
+                  ))}
                 </li>
                 <li>Kaydedin, 1–2 dk bekleyin, /giris sayfasından tekrar deneyin.</li>
               </ol>

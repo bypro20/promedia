@@ -51,7 +51,7 @@ export const FREE_TOOLS: FreeTool[] = [
   {
     slug: 'ucretsiz-takipci',
     title: 'Ücretsiz Deneme Paketi',
-    description: 'Kayıt olun, panel bakiyenizle küçük demo sipariş verin ve sistemi test edin.',
+    description: 'Kayıt olun, 100 takipçilik başlangıç paketini panel bakiyenizle satın alın.',
     platform: 'ProMedia',
     icon: '🎁',
     color: '#7844E4',

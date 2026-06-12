@@ -10,7 +10,6 @@ import { SatisfactionSection } from '@/components/home/satisfaction-section'
 import { WhyUs } from '@/components/home/why-us'
 import { Testimonials } from '@/components/testimonials'
 import { FaqSection } from '@/components/faq-section'
-import { AppDownload } from '@/components/home/app-download'
 import { BlogPreview } from '@/components/home/blog-preview'
 
 export default function HomePage() {
@@ -28,7 +27,6 @@ export default function HomePage() {
       <WhyUs />
       <Testimonials />
       <FaqSection />
-      <AppDownload />
       <BlogPreview />
     </main>
   )

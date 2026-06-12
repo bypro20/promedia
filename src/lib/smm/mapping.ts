@@ -1,58 +1,12 @@
 import type { PackageTier } from '@/lib/packages'
 import type { SmmService } from './types'
-import { fetchSmmServices } from './client'
+import { fetchSmmBalance, fetchSmmServices } from './client'
 import { getSmmProviders, isAutoCheapestEnabled } from './providers'
+import { smmCostUsd } from './pricing-engine'
+import { getPanelBalanceUsd as getPanelBalanceUsdConverted } from './panel-balance'
 import { getMappedEntry, loadMarkupConfig } from './service-map-store'
-
-const TIER_KEYWORDS: Record<PackageTier, string[]> = {
-  ucuz: ['ucuz', 'cheap', 'budget', 'economy', 'low'],
-  standart: ['standart', 'standard', 'global', 'normal'],
-  premium: ['premium', 'high', 'quality'],
-  gercek: ['gercek', 'real', 'vip', 'active', 'organic'],
-}
-
-const SERVICE_KEYWORDS: Record<string, string[]> = {
-  takipci: ['takipci', 'follower', 'followers', 'subscriber', 'abone', 'subscribers'],
-  'ucuz-takipci': ['takipci', 'follower', 'followers'],
-  'turk-takipci': ['turk', 'turkish', 'türk', 'follower'],
-  begeni: ['begeni', 'like', 'likes', 'heart'],
-  'ucuz-begeni': ['begeni', 'like', 'likes'],
-  'turk-begeni': ['turk', 'turkish', 'begeni', 'like'],
-  izlenme: ['izlenme', 'view', 'views', 'watch'],
-  'ucuz-izlenme': ['izlenme', 'view', 'views'],
-  'reels-izlenme': ['reels', 'view', 'views'],
-  'hikaye-izlenme': ['story', 'hikaye', 'view'],
-  yorum: ['yorum', 'comment', 'comments'],
-  'turk-yorum': ['turk', 'yorum', 'comment'],
-  kaydetme: ['kaydet', 'save', 'saves'],
-  etkilesim: ['etkilesim', 'engagement', 'impression'],
-  abone: ['abone', 'subscriber', 'subscribers'],
-  'ucuz-abone': ['abone', 'subscriber'],
-  'turk-abone': ['turk', 'abone', 'subscriber'],
-  retweet: ['retweet', 'repost'],
-  paylasim: ['share', 'paylasim'],
-  uye: ['member', 'uye', 'user'],
-  dinlenme: ['play', 'stream', 'dinlenme'],
-  goruntulenme: ['view', 'goruntulenme'],
-  reaksiyon: ['reaction', 'reaksiyon'],
-}
-
-const PLATFORM_KEYWORDS: Record<string, string[]> = {
-  instagram: ['instagram', 'insta', 'ig'],
-  tiktok: ['tiktok', 'tik tok', 'tt'],
-  youtube: ['youtube', 'yt'],
-  twitter: ['twitter', 'x.com', ' tweet'],
-  facebook: ['facebook', 'fb'],
-  telegram: ['telegram', 'tg'],
-  spotify: ['spotify'],
-  linkedin: ['linkedin'],
-  pinterest: ['pinterest'],
-  twitch: ['twitch'],
-  discord: ['discord'],
-  threads: ['threads'],
-  kick: ['kick'],
-  soundcloud: ['soundcloud'],
-}
+import { parseServiceSlug, parseSmmRate, scoreSmmServiceName } from './service-match'
+import { isWholesaleProvider, WHOLESALE_SCORE_BOOST } from './wholesale'
 
 export type ResolvedSmmService = {
   providerId: string
@@ -103,40 +57,6 @@ function readExplicitMap(): Record<string, { serviceId: number; providerId?: str
   return map
 }
 
-function parseSlug(slug: string) {
-  const match = slug.match(/^(.+)-(.+)-satin-al$/)
-  if (!match) return { platform: '', serviceKey: slug }
-  return { platform: match[1], serviceKey: match[2] }
-}
-
-function parseRate(rate?: string): number {
-  if (!rate) return Number.POSITIVE_INFINITY
-  const n = parseFloat(rate.replace(',', '.'))
-  return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY
-}
-
-function scoreServiceName(name: string, platform: string, serviceKey: string, tierId: PackageTier): number {
-  const lower = name.toLowerCase()
-  let score = 0
-
-  for (const kw of PLATFORM_KEYWORDS[platform] ?? [platform]) {
-    if (lower.includes(kw)) score += 10
-  }
-
-  for (const kw of SERVICE_KEYWORDS[serviceKey] ?? [serviceKey.replace(/-/g, ' ')]) {
-    if (lower.includes(kw)) score += 8
-  }
-
-  for (const kw of TIER_KEYWORDS[tierId]) {
-    if (lower.includes(kw)) score += 5
-  }
-
-  if (tierId === 'ucuz' && (lower.includes('turk') || lower.includes('türk'))) score -= 6
-  if (tierId === 'gercek' && lower.includes('bot')) score -= 8
-
-  return score
-}
-
 async function loadAllProviderServices() {
   const now = Date.now()
   if (cache && now - cache.at < 5 * 60 * 1000) return cache
@@ -162,80 +82,7 @@ async function loadAllProviderServices() {
   return cache
 }
 
-export async function resolveSmmService(
-  slug: string,
-  tierId: PackageTier,
-  amount: number
-): Promise<ResolvedSmmService> {
-  const dbEntry = await getMappedEntry(slug, tierId)
-  if (dbEntry) {
-    return {
-      providerId: dbEntry.providerId,
-      providerName: dbEntry.providerName,
-      serviceId: dbEntry.serviceId,
-      serviceName: dbEntry.serviceName,
-      rate: dbEntry.rate,
-      score: dbEntry.score,
-    }
-  }
-
-  const explicit = readExplicitMap()
-  const direct = explicit[`${slug}:${tierId}`] ?? explicit[slug]
-  if (direct) {
-    const provider = getSmmProviders().find((p) => p.id === direct.providerId) ?? getSmmProviders()[0]
-    return {
-      providerId: provider?.id ?? 'default',
-      providerName: provider?.name ?? 'SMM',
-      serviceId: direct.serviceId,
-      serviceName: 'Manual map',
-      rate: 0,
-      score: 999,
-    }
-  }
-  if (explicit['*']) {
-    const provider = getSmmProviders()[0]
-    return {
-      providerId: provider.id,
-      providerName: provider.name,
-      serviceId: explicit['*'].serviceId,
-      serviceName: 'Default map',
-      rate: 0,
-      score: 999,
-    }
-  }
-
-  const all = await loadAllProviderServices()
-  const { platform, serviceKey } = parseSlug(slug)
-
-  const candidates: ResolvedSmmService[] = []
-
-  for (const provider of all.providers) {
-    for (const svc of provider.services) {
-      const score = scoreServiceName(svc.name, platform, serviceKey, tierId)
-      const min = Number(svc.min ?? 0)
-      const max = Number(svc.max ?? 999999999)
-      if (score <= 0 || amount < min || amount > max) continue
-
-      candidates.push({
-        providerId: provider.id,
-        providerName: provider.name,
-        serviceId: svc.service,
-        serviceName: svc.name,
-        rate: parseRate(svc.rate),
-        score,
-      })
-    }
-  }
-
-  if (candidates.length === 0) {
-    throw new Error(
-      `SMM servis eşleşmesi bulunamadı: ${slug} (${tierId}). Admin → SMM Paneller'den "Tüm Servisleri Eşle" çalıştırın.`
-    )
-  }
-
-  const markupConfig = await loadMarkupConfig()
-  const useCheapest = markupConfig.autoCheapest ?? isAutoCheapestEnabled()
-
+function sortCandidates(candidates: ResolvedSmmService[], useCheapest: boolean) {
   candidates.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score
     const maxScore = Math.max(a.score, b.score)
@@ -247,8 +94,162 @@ export async function resolveSmmService(
     }
     return b.score - a.score
   })
+}
 
+/** Öncelik sırasına göre tüm aday paneller (bakiye kontrolü için) */
+export async function resolveSmmServiceCandidates(
+  slug: string,
+  tierId: PackageTier,
+  amount: number
+): Promise<ResolvedSmmService[]> {
+  const result: ResolvedSmmService[] = []
+  const seen = new Set<string>()
+  const add = (c: ResolvedSmmService) => {
+    const key = `${c.providerId}:${c.serviceId}`
+    if (seen.has(key)) return
+    seen.add(key)
+    result.push(c)
+  }
+
+  const dbEntry = await getMappedEntry(slug, tierId)
+  if (dbEntry) {
+    add({
+      providerId: dbEntry.providerId,
+      providerName: dbEntry.providerName,
+      serviceId: dbEntry.serviceId,
+      serviceName: dbEntry.serviceName,
+      rate: dbEntry.rate,
+      score: dbEntry.score,
+    })
+  }
+
+  const explicit = readExplicitMap()
+  const direct = explicit[`${slug}:${tierId}`] ?? explicit[slug]
+  if (direct) {
+    const provider = getSmmProviders().find((p) => p.id === direct.providerId) ?? getSmmProviders()[0]
+    add({
+      providerId: provider?.id ?? 'default',
+      providerName: provider?.name ?? 'SMM',
+      serviceId: direct.serviceId,
+      serviceName: 'Manual map',
+      rate: 0,
+      score: 999,
+    })
+  }
+  if (explicit['*']) {
+    const provider = getSmmProviders()[0]
+    add({
+      providerId: provider.id,
+      providerName: provider.name,
+      serviceId: explicit['*'].serviceId,
+      serviceName: 'Default map',
+      rate: 0,
+      score: 999,
+    })
+  }
+
+  const all = await loadAllProviderServices()
+  const markupConfig = await loadMarkupConfig()
+  const { platform, serviceKey } = parseServiceSlug(slug)
+  const autoCandidates: ResolvedSmmService[] = []
+
+  for (const provider of all.providers) {
+    for (const svc of provider.services) {
+      const score = scoreSmmServiceName(svc.name, platform, serviceKey, tierId)
+      const min = Number(svc.min ?? 0)
+      const max = Number(svc.max ?? 999999999)
+      if (score < 0 || amount < min || amount > max) continue
+
+      autoCandidates.push({
+        providerId: provider.id,
+        providerName: provider.name,
+        serviceId: svc.service,
+        serviceName: svc.name,
+        rate: parseSmmRate(svc.rate),
+        score:
+          score +
+          (markupConfig.preferWholesale !== false && isWholesaleProvider(provider.id)
+            ? WHOLESALE_SCORE_BOOST
+            : 0),
+      })
+    }
+  }
+
+  const useCheapest = markupConfig.autoCheapest ?? isAutoCheapestEnabled()
+  sortCandidates(autoCandidates, useCheapest)
+  for (const c of autoCandidates) add(c)
+
+  if (result.length === 0) {
+    throw new Error(
+      `SMM servis eşleşmesi bulunamadı: ${slug} (${tierId}). Admin → SMM Paneller'den "Tüm Servisleri Eşle" çalıştırın.`
+    )
+  }
+
+  return result
+}
+
+export async function resolveSmmService(
+  slug: string,
+  tierId: PackageTier,
+  amount: number
+): Promise<ResolvedSmmService> {
+  const candidates = await resolveSmmServiceCandidates(slug, tierId, amount)
   return candidates[0]
+}
+
+const balanceCache = new Map<string, { at: number; usd: number; currency: string }>()
+
+export async function getPanelBalanceUsd(providerId: string): Promise<{ usd: number; currency: string }> {
+  const cached = balanceCache.get(providerId)
+  if (cached && Date.now() - cached.at < 30_000) {
+    return { usd: cached.usd, currency: cached.currency }
+  }
+  const markup = await loadMarkupConfig()
+  const result = await getPanelBalanceUsdConverted(providerId, markup.usdTry)
+  balanceCache.set(providerId, { at: Date.now(), usd: result.usd, currency: result.currency })
+  return result
+}
+
+/** Yeterli toptan panel bakiyesi olan ilk adayı seçer */
+export async function resolveSmmServiceWithBalance(
+  slug: string,
+  tierId: PackageTier,
+  amount: number
+): Promise<ResolvedSmmService> {
+  const candidates = await resolveSmmServiceCandidates(slug, tierId, amount)
+  const tried: string[] = []
+
+  for (const candidate of candidates) {
+    const costUsd = smmCostUsd(candidate.rate, amount)
+    const { usd: available, currency } = await getPanelBalanceUsd(candidate.providerId)
+    tried.push(candidate.providerName)
+
+    if (costUsd <= 0) {
+      if (available > 0) return candidate
+      continue
+    }
+    if (available >= costUsd) return candidate
+
+    if (available < costUsd) {
+      console.warn(
+        `[smm] ${candidate.providerName} bakiye yetersiz: ${available} ${currency} < ${costUsd.toFixed(4)} USD`
+      )
+    }
+  }
+
+  throw new Error(
+    `Toptan panel bakiyesi yetersiz (${tried.join(', ')}). BulkFollows / SMMKings / SMMRaja panele USD yükleyin.`
+  )
+}
+
+/** Panel bakiyesi yeterli mi kontrol et (USD) */
+export async function assertPanelBalance(providerId: string, estimatedCostUsd: number) {
+  const { usd: available, currency } = await getPanelBalanceUsd(providerId)
+  if (available < estimatedCostUsd) {
+    throw new Error(
+      `SMM panel bakiyesi yetersiz (${available.toFixed(2)} ${currency}, gerekli ~${estimatedCostUsd.toFixed(4)} USD). Toptan panele bakiye yükleyin.`
+    )
+  }
 }
 
 /** @deprecated use resolveSmmService */
@@ -267,6 +268,7 @@ export async function resolveSmmServiceId(
 
 export function clearServiceCache() {
   cache = null
+  balanceCache.clear()
 }
 
 export async function listProviderSummary() {

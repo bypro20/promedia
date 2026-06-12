@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { IconBolt, IconShield, IconUsers } from '@/components/icons'
+import { FadeIn } from '@/components/ui/fade-in'
 
 const FEATURES = [
   { icon: IconUsers, title: 'Uygun Fiyatlar', text: 'Tüm sosyal medya hizmetlerinde kaliteli çözümleri erişilebilir fiyatlarla sunuyoruz. Düzenli kampanyalar ve dönemsel fırsatlarla bütçenize uygun seçenekler bulabilirsiniz.' },
@@ -14,23 +15,27 @@ export function WhyUs() {
   return (
     <section className="bg-[#F0F1F9] py-14">
       <div className="sd-container">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold text-[#33353E]">
-            Takipçi Satın Almak için <span className="text-[#7844E4]">Neden Biz?</span>
-          </h2>
-          <p className="mt-1 text-sm text-[#666F94]">Diğer hizmet sağlayanlardan farklarımız, iddaalıyız.</p>
-        </div>
+        <FadeIn>
+          <div className="text-center">
+            <h2 className="text-2xl font-black text-[#33353E] lg:text-3xl">
+              Takipçi Satın Almak için <span className="text-[#7844E4]">Neden Biz?</span>
+            </h2>
+            <p className="mt-1 text-sm text-[#666F94]">Diğer hizmet sağlayanlardan farklarımız, iddaalıyız.</p>
+          </div>
+        </FadeIn>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((f) => {
+          {FEATURES.map((f, i) => {
             const Icon = f.icon
             return (
-              <div key={f.title} className="rounded-2xl bg-white p-6 shadow-[0_4px_24px_rgba(0,0,0,0.05)]">
+              <FadeIn key={f.title} delay={i * 60}>
+                <div className="sd-card-hover h-full rounded-2xl bg-white p-6 shadow-[0_4px_24px_rgba(120,68,228,0.06)]">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EDE5FF] text-[#7844E4]">
                   <Icon size={20} />
                 </div>
                 <h3 className="mt-4 font-semibold text-[#33353E]">{f.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-[#666F94]">{f.text}</p>
-              </div>
+                </div>
+              </FadeIn>
             )
           })}
         </div>

@@ -6,7 +6,7 @@ export function TopBar() {
   return (
     <section className="sticky top-0 z-[1000] bg-[#7844E4] text-white">
       <div className="sd-container flex h-[42px] items-center justify-between text-sm">
-        <Link href="#" className="flex items-center gap-1.5 transition-opacity hover:opacity-80">
+        <Link href="/iletisim" className="flex items-center gap-1.5 transition-opacity hover:opacity-80">
           <IconPhone size={14} />
           İletişim
         </Link>

@@ -107,7 +107,7 @@ export async function POST(req: Request) {
 
 export async function GET() {
   const user = await getSession()
-  if (!user) return NextResponse.json({ ok: false, user: null }, { status: 401 })
+  if (!user) return NextResponse.json({ ok: false, user: null })
   return NextResponse.json({ ok: true, user })
 }
 

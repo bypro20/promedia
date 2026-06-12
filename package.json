@@ -13,7 +13,10 @@
     "seed": "npx tsx scripts/seed-admin.ts",
     "health": "node scripts/site-health-bot.mjs",
     "team:status": "node scripts/agent-coordinator.mjs",
-    "team:dispatch": "node scripts/agent-coordinator.mjs --json"
+    "team:dispatch": "node scripts/agent-coordinator.mjs --json",
+    "oauth:verify": "node scripts/verify-google-oauth.mjs",
+    "smm:save-key": "tsx scripts/save-smm-key.ts",
+    "smm:clear-key": "tsx scripts/save-smm-key.ts"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.8.0",
@@ -22,6 +25,7 @@
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.10.0",
     "dotenv": "^17.4.2",
+    "iyzipay": "^2.0.67",
     "jose": "^6.2.3",
     "next": "16.2.7",
     "prisma": "^7.8.0",

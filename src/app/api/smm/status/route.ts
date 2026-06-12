@@ -53,8 +53,17 @@ export async function GET(req: Request) {
   try {
     const balances = await Promise.allSettled(
       providers.map(async (p) => {
-        const balance = await fetchSmmBalance(p.id)
-        return { id: p.id, name: p.name, balance }
+        try {
+          const balance = await fetchSmmBalance(p.id)
+          return { id: p.id, name: p.name, balance, ok: true as const }
+        } catch (err) {
+          return {
+            id: p.id,
+            name: p.name,
+            ok: false as const,
+            error: err instanceof Error ? err.message : 'Bakiye alınamadı',
+          }
+        }
       })
     )
 
@@ -66,11 +75,7 @@ export async function GET(req: Request) {
       autoCheapest: isAutoCheapestEnabled(),
       providerCount: providers.length,
       providers: summary,
-      balances: balances.map((b, i) =>
-        b.status === 'fulfilled'
-          ? { ...b.value, ok: true }
-          : { id: providers[i].id, name: providers[i].name, ok: false, error: 'Bakiye alınamadı' }
-      ),
+      balances: balances.map((b) => (b.status === 'fulfilled' ? b.value : { id: '', name: '', ok: false, error: 'Bakiye alınamadı' })),
       presets,
     })
   } catch (err) {

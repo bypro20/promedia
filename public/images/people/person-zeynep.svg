@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 88" fill="none">
+  <circle cx="44" cy="44" r="44" fill="#E1306C"/>
+  <circle cx="44" cy="36" r="16" fill="#fff" fill-opacity="0.95"/>
+  <ellipse cx="44" cy="68" rx="22" ry="18" fill="#fff" fill-opacity="0.9"/>
+  <text x="44" y="41" text-anchor="middle" fill="#E1306C" font-family="system-ui,sans-serif" font-size="14" font-weight="700">DK</text>
+</svg>

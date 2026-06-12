@@ -14,6 +14,7 @@ const NAV = [
   { label: 'Organik Büyüme', href: '/instagram-takipci-satin-al' },
   { label: 'Blog', href: '/blog' },
   { label: 'Ücretsiz Araçlar', href: '/ucretsiz-araclar' },
+  { label: 'İletişim', href: '/iletisim' },
 ]
 
 /** SD: .main-navbar-section — white, 65px, shadow, sticky below top bar */
@@ -34,7 +35,6 @@ export function Header() {
       <TopBar />
       <header className="sticky top-[42px] z-[999] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
         <div className="sd-container flex h-[65px] items-center justify-between gap-4">
-          {/* Logo — SD: navbar-logo.webp 140×34 */}
           <Link href="/" className="shrink-0">
             <span className="flex items-center gap-2">
               <span className="flex h-[34px] w-[34px] items-center justify-center rounded-lg bg-[#7844E4] text-xs font-bold text-white">
@@ -46,7 +46,6 @@ export function Header() {
             </span>
           </Link>
 
-          {/* Center nav — SD: 16px, font-weight 600, #33353E */}
           <nav className="hidden items-center gap-1 lg:flex">
             {NAV.map((item) =>
               item.mega ? (
@@ -77,32 +76,34 @@ export function Header() {
                           <p className="mb-4 text-xs font-bold uppercase tracking-widest text-[#7844E4]">
                             En Çok Kullanılan Kategorilerimiz
                           </p>
-                          <div className="grid grid-cols-4 gap-5">
-                            {PLATFORM_SERVICES.slice(0, 8).map((group) => (
-                              <div key={group.platform}>
-                                <p className="mb-2 text-sm font-bold text-[#33353E]">{group.platform}</p>
-                                <ul className="space-y-0.5">
-                                  {group.items.slice(0, 9).map((s) => (
-                                    <li key={s.href}>
-                                      <Link
-                                        href={s.href}
-                                        onClick={() => setMegaOpen(false)}
-                                        className="block rounded-md px-2 py-1 text-xs text-[#666F94] hover:bg-[#EDE5FF] hover:font-semibold hover:text-[#7844E4]"
-                                      >
-                                        {s.name.replace(`${group.platform} `, '')}
-                                      </Link>
-                                    </li>
-                                  ))}
-                                </ul>
-                                <Link
-                                  href="/hizmetler"
-                                  onClick={() => setMegaOpen(false)}
-                                  className="mt-2 block px-2 text-xs font-bold text-[#7844E4] hover:underline"
-                                >
-                                  Tümünü Görüntüle
-                                </Link>
-                              </div>
-                            ))}
+                          <div className="max-h-[420px] overflow-y-auto pr-1">
+                            <div className="grid grid-cols-4 gap-5">
+                              {PLATFORM_SERVICES.map((group) => (
+                                <div key={group.platform}>
+                                  <p className="mb-2 text-sm font-bold text-[#33353E]">{group.platform}</p>
+                                  <ul className="space-y-0.5">
+                                    {group.items.slice(0, 9).map((s) => (
+                                      <li key={s.href}>
+                                        <Link
+                                          href={s.href}
+                                          onClick={() => setMegaOpen(false)}
+                                          className="block rounded-md px-2 py-1 text-xs text-[#666F94] hover:bg-[#EDE5FF] hover:font-semibold hover:text-[#7844E4]"
+                                        >
+                                          {s.name.replace(`${group.platform} `, '')}
+                                        </Link>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                  <Link
+                                    href={group.items[0]?.href ?? '/hizmetler'}
+                                    onClick={() => setMegaOpen(false)}
+                                    className="mt-2 block px-2 text-xs font-bold text-[#7844E4] hover:underline"
+                                  >
+                                    Tümünü Görüntüle
+                                  </Link>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -121,7 +122,6 @@ export function Header() {
             )}
           </nav>
 
-          {/* Right — SD: nav-pill icons + Giriş Yap */}
           <div className="flex items-center gap-2">
             <button type="button" className="sd-nav-pill hidden text-[#7844E4] sm:flex" aria-label="Bildirimler">
               <IconBell size={20} />
@@ -159,6 +159,29 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+            <div className="mt-3 flex flex-col gap-2 border-t border-[#E9EBF5] pt-3">
+              <Link
+                href="/giris"
+                className="rounded-2xl bg-[#7844E4] px-4 py-3 text-center text-sm font-semibold text-white"
+                onClick={() => setMobileOpen(false)}
+              >
+                Giriş Yap
+              </Link>
+              <Link
+                href="/kayit"
+                className="rounded-xl border border-[#E4DAFA] px-4 py-3 text-center text-sm font-semibold text-[#7844E4]"
+                onClick={() => setMobileOpen(false)}
+              >
+                Kayıt Ol
+              </Link>
+              <Link
+                href="/sepet"
+                className="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-[#666F94] hover:bg-[#EDE5FF]"
+                onClick={() => setMobileOpen(false)}
+              >
+                Sepet {cartCount > 0 ? `(${cartCount})` : ''}
+              </Link>
+            </div>
           </div>
         )}
       </header>

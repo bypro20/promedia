@@ -3,12 +3,17 @@ import { getService } from '@/lib/catalog'
 import type { PackageTier } from '@/lib/packages'
 import { createSmmOrder, fetchSmmOrderStatus, normalizeSmmStatus, requestSmmRefill } from '@/lib/smm/client'
 import { buildTargetLink } from '@/lib/smm/link'
-import { resolveSmmService } from '@/lib/smm/mapping'
+import { resolveSmmServiceCandidates } from '@/lib/smm/mapping'
+import { fetchPanelBalance, panelCanAffordOrder, smmCostNative } from '@/lib/smm/panel-balance'
+import { loadMarkupConfig } from '@/lib/smm/service-map-store'
 import { ensureSmmKeyCache } from '@/lib/smm/key-store'
 import { isDemoMode, isSmmConfigured } from '@/lib/smm/providers'
 
 import { debitBalance, refundOrderBalance } from '@/lib/wallet'
 import { resolveSellPrice } from '@/lib/smm/pricing-engine'
+
+const PANEL_BALANCE_ERROR =
+  'Toptan panel bakiyesi yetersiz. Panele USD yüklenince otomatik gönderilir.'
 
 function generateOrderCode() {
   const n = Math.floor(100000 + Math.random() * 900000)
@@ -31,50 +36,14 @@ async function findPackage(serviceSlug: string, tierId: PackageTier, packageId: 
   return { service, tier, pkg, smmCost: priced.cost, margin: priced.margin }
 }
 
-export async function createOrder(input: {
-  serviceSlug: string
-  tierId: PackageTier
-  packageId: string
-  target: string
-  email?: string
-  userId?: string
-  payFromBalance?: boolean
-}) {
+/** Ödeme alındıktan sonra SMM paneline otomatik sipariş gönder */
+export async function fulfillOrderToSmm(orderId: string) {
   await ensureSmmKeyCache()
-  const { service, tier, pkg } = await findPackage(input.serviceSlug, input.tierId, input.packageId)
-  const link = buildTargetLink(service, input.target)
-
-  if (input.payFromBalance && input.userId) {
-    const user = await prisma.user.findUnique({ where: { id: input.userId } })
-    if (!user) throw new Error('Kullanıcı bulunamadı')
-    if (user.balance < pkg.price) throw new Error('Yetersiz bakiye. Panelden bakiye yükleyin.')
-  }
-
-  let code = generateOrderCode()
-  for (let i = 0; i < 5; i++) {
-    const exists = await prisma.order.findUnique({ where: { code } })
-    if (!exists) break
-    code = generateOrderCode()
-  }
-
-  const order = await prisma.order.create({
-    data: {
-      code,
-      userId: input.userId ?? null,
-      serviceSlug: input.serviceSlug,
-      tierId: input.tierId,
-      packageId: input.packageId,
-      amount: pkg.amount,
-      price: pkg.price,
-      target: link,
-      email: input.email?.trim() || null,
-      paymentStatus: input.payFromBalance ? 'paid' : 'pending',
-      status: 'pending',
-    },
-  })
-
-  if (input.payFromBalance && input.userId) {
-    await debitBalance(input.userId, pkg.price, `Sipariş ${code}`, order.id)
+  const order = await prisma.order.findUnique({ where: { id: orderId } })
+  if (!order) throw new Error('Sipariş bulunamadı')
+  if (order.smmOrderId && !order.smmOrderId.startsWith('DEMO-')) return order
+  if (order.paymentStatus !== 'paid') {
+    throw new Error('Ödeme onaylanmadan SMM gönderilemez')
   }
 
   if (isDemoMode()) {
@@ -92,34 +61,58 @@ export async function createOrder(input: {
   }
 
   try {
-    const resolved = await resolveSmmService(input.serviceSlug, input.tierId, pkg.amount)
-    const smmRes = await createSmmOrder({
-      serviceId: resolved.serviceId,
-      link,
-      quantity: pkg.amount,
-      providerId: resolved.providerId,
-    })
+    const candidates = await resolveSmmServiceCandidates(
+      order.serviceSlug,
+      order.tierId as PackageTier,
+      order.amount
+    )
+    let lastError = 'SMM siparişi oluşturulamadı'
 
-    if (smmRes.error || !smmRes.order) {
+    for (const resolved of candidates) {
+      const panelBal = await fetchPanelBalance(resolved.providerId)
+      if (!panelCanAffordOrder(panelBal, resolved.rate, order.amount)) continue
+
+      const markup = await loadMarkupConfig()
+      const costUsd =
+        panelBal.currency === 'TRY'
+          ? smmCostNative(resolved.rate, order.amount) / markup.usdTry
+          : smmCostNative(resolved.rate, order.amount)
+
+      const smmRes = await createSmmOrder({
+        serviceId: resolved.serviceId,
+        link: order.target,
+        quantity: order.amount,
+        providerId: resolved.providerId,
+      })
+
+      if (smmRes.error || !smmRes.order) {
+        lastError = smmRes.error ?? lastError
+        continue
+      }
+
       return prisma.order.update({
         where: { id: order.id },
         data: {
-          status: 'failed',
+          status: 'processing',
           smmProvider: resolved.providerId,
           smmServiceId: resolved.serviceId,
-          errorMessage: smmRes.error ?? 'SMM siparişi oluşturulamadı',
+          smmOrderId: String(smmRes.order),
+          smmStatus: 'Pending',
+          smmCharge: costUsd > 0 ? costUsd : null,
+          errorMessage: null,
         },
       })
     }
 
+    const awaitingBalance =
+      lastError === 'SMM siparişi oluşturulamadı' ||
+      /bakiye yetersiz|insufficient|not enough|balance/i.test(lastError)
+
     return prisma.order.update({
       where: { id: order.id },
       data: {
-        status: 'processing',
-        smmProvider: resolved.providerId,
-        smmServiceId: resolved.serviceId,
-        smmOrderId: String(smmRes.order),
-        smmStatus: 'Pending',
+        status: awaitingBalance ? 'awaiting_panel_balance' : 'failed',
+        errorMessage: awaitingBalance ? PANEL_BALANCE_ERROR : lastError,
       },
     })
   } catch (err) {
@@ -129,6 +122,116 @@ export async function createOrder(input: {
       data: { status: 'failed', errorMessage: message },
     })
   }
+}
+
+async function reserveOrderCode() {
+  let code = generateOrderCode()
+  for (let i = 0; i < 5; i++) {
+    const exists = await prisma.order.findUnique({ where: { code } })
+    if (!exists) return code
+    code = generateOrderCode()
+  }
+  return code
+}
+
+/** Misafir — iyzico ödeme bekleyen sipariş */
+export async function createPendingGuestOrder(input: {
+  serviceSlug: string
+  tierId: PackageTier
+  packageId: string
+  target: string
+  email: string
+}) {
+  await ensureSmmKeyCache()
+  const { service, pkg } = await findPackage(input.serviceSlug, input.tierId, input.packageId)
+  const link = buildTargetLink(service, input.target)
+  const code = await reserveOrderCode()
+
+  return prisma.order.create({
+    data: {
+      code,
+      serviceSlug: input.serviceSlug,
+      tierId: input.tierId,
+      packageId: input.packageId,
+      amount: pkg.amount,
+      price: pkg.price,
+      target: link,
+      email: input.email.trim().toLowerCase(),
+      paymentStatus: 'pending',
+      status: 'pending',
+    },
+  })
+}
+
+export async function completeGuestOrderPayment(code: string) {
+  const order = await prisma.order.findUnique({ where: { code: code.trim().toUpperCase() } })
+  if (!order) throw new Error('Sipariş bulunamadı')
+  if (order.paymentStatus === 'paid') return fulfillOrderToSmm(order.id)
+
+  await prisma.order.update({
+    where: { id: order.id },
+    data: { paymentStatus: 'paid' },
+  })
+  return fulfillOrderToSmm(order.id)
+}
+
+export async function failGuestOrderPayment(code: string) {
+  const order = await prisma.order.findUnique({ where: { code: code.trim().toUpperCase() } })
+  if (!order || order.paymentStatus === 'paid') return
+  await prisma.order.update({
+    where: { id: order.id },
+    data: { paymentStatus: 'failed', status: 'cancelled' },
+  })
+}
+
+export async function createOrder(input: {
+  serviceSlug: string
+  tierId: PackageTier
+  packageId: string
+  target: string
+  email?: string
+  userId?: string
+  payFromBalance?: boolean
+}) {
+  await ensureSmmKeyCache()
+
+  if (!input.userId || !input.payFromBalance) {
+    throw new Error('Sipariş için giriş yapın, bakiye yükleyin ve bakiyeden ödeyin.')
+  }
+
+  const { service, tier, pkg } = await findPackage(input.serviceSlug, input.tierId, input.packageId)
+  const link = buildTargetLink(service, input.target)
+
+  if (input.payFromBalance && input.userId) {
+    const user = await prisma.user.findUnique({ where: { id: input.userId } })
+    if (!user) throw new Error('Kullanıcı bulunamadı')
+    if (user.balance < pkg.price) throw new Error('Yetersiz bakiye. Panelden bakiye yükleyin.')
+  }
+
+  const code = await reserveOrderCode()
+
+  const order = await prisma.order.create({
+    data: {
+      code,
+      userId: input.userId ?? null,
+      serviceSlug: input.serviceSlug,
+      tierId: input.tierId,
+      packageId: input.packageId,
+      amount: pkg.amount,
+      price: pkg.price,
+      target: link,
+      email: input.email?.trim() || null,
+      paymentStatus: 'pending',
+      status: 'pending',
+    },
+  })
+
+  await debitBalance(input.userId!, pkg.price, `Sipariş ${code}`, order.id)
+  await prisma.order.update({
+    where: { id: order.id },
+    data: { paymentStatus: 'paid' },
+  })
+  return fulfillOrderToSmm(order.id)
 }
 
 export async function lookupOrder(code: string) {
@@ -261,53 +364,55 @@ export async function adminRefundOrder(code: string) {
 export async function adminResubmitOrder(code: string) {
   const order = await prisma.order.findUnique({ where: { code: code.trim().toUpperCase() } })
   if (!order) throw new Error('Sipariş bulunamadı')
-  if (!['failed', 'cancelled'].includes(order.status)) {
-    throw new Error('Yalnızca başarısız veya iptal siparişler yeniden gönderilebilir')
+  if (!['failed', 'cancelled', 'awaiting_panel_balance'].includes(order.status)) {
+    throw new Error('Yalnızca başarısız, bekleyen veya iptal siparişler yeniden gönderilebilir')
   }
 
   await ensureSmmKeyCache()
 
-  if (isDemoMode()) {
-    return prisma.order.update({
-      where: { id: order.id },
-      data: {
-        status: 'in_progress',
-        smmOrderId: `DEMO-${Date.now()}`,
-        smmStatus: 'In progress',
-        errorMessage: null,
-      },
-    })
-  }
-
-  const resolved = await resolveSmmService(order.serviceSlug, order.tierId as PackageTier, order.amount)
-  const smmRes = await createSmmOrder({
-    serviceId: resolved.serviceId,
-    link: order.target,
-    quantity: order.amount,
-    providerId: resolved.providerId,
-  })
-
-  if (smmRes.error || !smmRes.order) {
-    return prisma.order.update({
-      where: { id: order.id },
-      data: { errorMessage: smmRes.error ?? 'SMM yeniden gönderilemedi' },
-    })
-  }
-
-  return prisma.order.update({
+  await prisma.order.update({
     where: { id: order.id },
-    data: {
-      status: 'processing',
-      smmProvider: resolved.providerId,
-      smmServiceId: resolved.serviceId,
-      smmOrderId: String(smmRes.order),
-      smmStatus: 'Pending',
-      errorMessage: null,
-    },
+    data: { paymentStatus: 'paid', status: 'pending', errorMessage: null },
   })
+  return fulfillOrderToSmm(order.id)
+}
+
+/** Toptan panele bakiye yüklenince ödenmiş bekleyen siparişleri otomatik gönder */
+export async function fulfillOrdersAwaitingPanelBalance(limit = 30) {
+  const orders = await prisma.order.findMany({
+    where: {
+      paymentStatus: 'paid',
+      OR: [
+        { status: 'awaiting_panel_balance' },
+        {
+          status: { in: ['pending', 'failed'] },
+          smmOrderId: null,
+          errorMessage: { contains: 'bakiye' },
+        },
+      ],
+    },
+    take: limit,
+    orderBy: { createdAt: 'asc' },
+  })
+
+  let fulfilled = 0
+  let stillWaiting = 0
+  for (const o of orders) {
+    if (o.smmOrderId && !o.smmOrderId.startsWith('DEMO-')) continue
+    try {
+      const result = await fulfillOrderToSmm(o.id)
+      if (result.smmOrderId && !result.smmOrderId.startsWith('DEMO-')) fulfilled++
+      else if (result.status === 'awaiting_panel_balance') stillWaiting++
+    } catch {
+      stillWaiting++
+    }
+  }
+  return { checked: orders.length, fulfilled, stillWaiting }
 }
 
 export async function syncPendingOrders(limit = 50) {
+  const awaiting = await fulfillOrdersAwaitingPanelBalance(limit)
+
   const orders = await prisma.order.findMany({
     where: {
       smmOrderId: { not: null },
@@ -327,5 +432,8 @@ export async function syncPendingOrders(limit = 50) {
       /* skip */
     }
   }
-  return { checked: orders.length, updated }
+  return {
+    statusSync: { checked: orders.length, updated },
+    panelBalanceQueue: awaiting,
+  }
 }

@@ -1,5 +1,6 @@
 import { getPricedService } from '@/lib/priced-catalog'
 import { ServiceOrderPanel } from '@/components/service-order-panel'
+import { ServiceProductCard } from '@/components/service-product-card'
 import { FaqSection } from '@/components/faq-section'
 import { Testimonials } from '@/components/testimonials'
 import { SeoBlocks } from '@/components/seo-blocks'
@@ -68,6 +69,7 @@ export default async function ServicePage({ params }: Props) {
       </section>
 
       <section className="sd-container py-8">
+        <ServiceProductCard service={service} />
         <ServiceOrderPanel service={service} />
       </section>
 

@@ -18,7 +18,7 @@ export const BLOG_POSTS: BlogPost[] = [
     readMin: 6,
     content: [
       'Instagram\'da büyümek için organik yöntemler kadar stratejik yatırımlar da önemlidir. Takipçi satın alırken dikkat etmeniz gereken ilk kriter, panelin şeffaflığı ve teslimat garantisidir.',
-      'Güvenilir bir SMM panelinde SSL sertifikası, canlı destek ve telafi (refill) garantisi bulunmalıdır. ProMedia\'da her sipariş benzersiz kod ile takip edilir; demo mod dışında gerçek SMM panellerine otomatik iletilir.',
+      'Güvenilir bir SMM panelinde SSL sertifikası, canlı destek ve telafi (refill) garantisi bulunmalıdır. ProMedia\'da her sipariş benzersiz kod ile takip edilir; siparişler otomatik olarak işleme alınır.',
       'Hesabınızı korumak için: (1) Ani 50.000 takipçi yerine kademeli paketler tercih edin. (2) Profilinizi gizli yapmayın. (3) Aynı anda çok sayıda farklı servis siparişi vermekten kaçının.',
       'Ödeme sonrası bakiyenizden anında sipariş verebilir, panelinizden durumu izleyebilirsiniz. Sorun yaşarsanız destek talebi açın veya telafi formunu kullanın.',
     ],

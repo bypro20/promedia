@@ -24,7 +24,7 @@ const LINKS = [
   { href: '/admin/kullanicilar', label: 'Kullanıcılar', icon: IconUsers },
   { href: '/admin/guvenlik', label: 'Güvenlik', icon: IconShield },
   { href: '/admin/hizmetler', label: 'Hizmetler', icon: IconOrders },
-  { href: '/admin/smm', label: 'SMM Paneller', icon: IconPlug },
+  { href: '/admin/smm', label: 'Toptan & SMM', icon: IconPlug },
   { href: '/admin/destek', label: 'Destek', icon: IconSupport },
   { href: '/admin/islemler', label: 'İşlemler', icon: IconWallet },
   { href: '/admin/ayarlar', label: 'Ayarlar', icon: IconSettings },

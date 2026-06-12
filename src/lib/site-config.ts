@@ -1,14 +1,37 @@
 /** Site-wide contact, payment and legal config — env overrides supported */
+
+function resolveSiteDomain(): string {
+  const fromEnv = process.env.SITE_DOMAIN?.trim()
+  if (fromEnv) return fromEnv.replace(/^https?:\/\//, '').replace(/\/$/, '')
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+  if (siteUrl) {
+    try {
+      return new URL(siteUrl).hostname
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (process.env.VERCEL_URL) return process.env.VERCEL_URL
+
+  return 'prmdia.com'
+}
+
+export function getSiteDomain() {
+  return resolveSiteDomain()
+}
+
 export const SITE = {
   name: 'ProMedia',
-  domain: 'promedia-kappa.vercel.app',
-  email: process.env.SITE_EMAIL ?? 'destek@promedia.com.tr',
-  whatsapp: process.env.SITE_WHATSAPP ?? '905551234567',
+  domain: resolveSiteDomain(),
+  email: process.env.SITE_EMAIL ?? 'destek@prmdia.com',
+  whatsapp: process.env.SITE_WHATSAPP ?? '905051236824',
   whatsappMessage: encodeURIComponent('Merhaba, ProMedia hakkında bilgi almak istiyorum.'),
   get whatsappUrl() {
     return `https://wa.me/${this.whatsapp}?text=${this.whatsappMessage}`
   },
-  phone: process.env.SITE_PHONE ?? '+90 555 123 45 67',
+  phone: process.env.SITE_PHONE ?? '0505 123 68 24',
   address: 'İstanbul, Türkiye',
   workingHours: '7/24 online destek',
 } as const
@@ -19,12 +42,6 @@ export const BANK_ACCOUNTS = [
     holder: 'ProMedia Dijital Hizmetler',
     iban: process.env.BANK_IBAN ?? 'TR00 0000 0000 0000 0000 0000 00',
     branch: 'Merkez Şube',
-  },
-  {
-    bank: 'Papara',
-    holder: 'ProMedia',
-    iban: process.env.PAPARA_NO ?? '1234567890',
-    branch: 'Papara No',
   },
 ] as const
 

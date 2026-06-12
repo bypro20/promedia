@@ -1,15 +1,8 @@
 import Link from 'next/link'
 import { PLATFORM_SERVICES } from '@/lib/catalog'
+import { LEGAL_LINKS } from '@/lib/legal-config'
 import { SITE } from '@/lib/site-config'
-
-const KURUMSAL = [
-  { label: 'Hakkımızda', href: '/hakkimizda' },
-  { label: 'İade Koşulları', href: '/iade-kosullari' },
-  { label: 'Kullanım Sözleşmesi', href: '/kullanim-sozlesmesi' },
-  { label: 'İletişim', href: '/iletisim' },
-  { label: 'Blog', href: '/blog' },
-  { label: 'KVKK', href: '/kvkk' },
-]
+import { PaymentTrustBar } from '@/components/payment-trust-bar'
 
 export function Footer() {
   return (
@@ -40,7 +33,7 @@ export function Footer() {
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-white/50">Hızlı Servisler</p>
             <ul className="mt-3 space-y-1.5 text-sm text-white/70">
-              {PLATFORM_SERVICES.slice(0, 8).map((g) => (
+              {PLATFORM_SERVICES.map((g) => (
                 <li key={g.platform}>
                   <Link href={g.items[0]?.href ?? '/hizmetler'} className="hover:text-[#BFA0FF]">{g.platform}</Link>
                 </li>
@@ -51,9 +44,11 @@ export function Footer() {
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-white/50">Kurumsal</p>
             <ul className="mt-3 space-y-1.5 text-sm text-white/70">
-              {KURUMSAL.map((k) => (
+              {LEGAL_LINKS.map((k) => (
                 <li key={k.label}><Link href={k.href} className="hover:text-[#BFA0FF]">{k.label}</Link></li>
               ))}
+              <li><Link href="/blog" className="hover:text-[#BFA0FF]">Blog</Link></li>
+              <li><Link href="/kullanim-sozlesmesi" className="hover:text-[#BFA0FF]">Kullanım Sözleşmesi</Link></li>
             </ul>
           </div>
           <div>
@@ -65,9 +60,12 @@ export function Footer() {
             </ul>
           </div>
         </div>
-        <p className="mt-10 border-t border-white/10 pt-6 text-center text-xs text-white/40">
+        <p className="mt-10 border-t border-white/10 pt-8 text-center text-xs text-white/40">
           ProMedia 2024–{new Date().getFullYear()} © Tüm hakları saklıdır.
         </p>
+        <div className="mt-8 pb-4">
+          <PaymentTrustBar variant="dark" />
+        </div>
       </div>
     </footer>
   )

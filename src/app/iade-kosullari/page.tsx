@@ -1,36 +1,27 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { LegalPage } from '@/components/legal/legal-page'
-import { SITE } from '@/lib/site-config'
 
 export const metadata: Metadata = {
   title: 'İade Koşulları',
-  description: 'ProMedia sipariş iade ve telafi politikası.',
+  description: 'ProMedia iade politikası — güncel sayfa teslimat ve iade şartları.',
 }
 
 export default function IadePage() {
   return (
-    <LegalPage title="İade Koşulları" subtitle="Dijital hizmet iade ve telafi politikamız">
+    <LegalPage title="İade Koşulları" subtitle="Bu sayfa güncellendi">
       <p>
-        SMM hizmetleri dijital ve anında işleme alınan ürünlerdir. Genel iade koşulları aşağıdadır.
+        İade ve teslimat koşullarımızın tam metni{' '}
+        <Link href="/teslimat-iade-sartlari" className="font-bold text-[#7844E4] hover:underline">
+          Teslimat ve İade Şartları
+        </Link>{' '}
+        sayfasına taşınmıştır. iyzico ve 6502 sayılı Kanun uyumlu güncel metin için lütfen o sayfayı inceleyin.
       </p>
-      <h2 className="text-xl font-bold">Telafi (Refill) Garantisi</h2>
       <p>
-        Telafi destekli servislerde belirtilen süre içinde düşüş yaşanırsa ücretsiz telafi talep edebilirsiniz.
-        Panel → Telafi veya <a href="/telafi-talebi" className="text-[#7844E4] font-semibold">telafi formu</a> üzerinden başvurun.
+        <Link href="/teslimat-iade-sartlari" className="inline-block rounded-xl bg-[#7844E4] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#6835d3]">
+          Teslimat ve İade Şartları →
+        </Link>
       </p>
-      <h2 className="text-xl font-bold">İade Edilebilir Durumlar</h2>
-      <ul className="list-disc space-y-1 pl-5">
-        <li>Sipariş hiç başlamadıysa ve 48 saat geçtiyse</li>
-        <li>Sistem hatası nedeniyle yanlış miktar teslim edildiyse</li>
-        <li>Admin tarafından iptal onaylanan siparişler</li>
-      </ul>
-      <h2 className="text-xl font-bold">İade Edilemeyen Durumlar</h2>
-      <ul className="list-disc space-y-1 pl-5">
-        <li>Tamamlanan veya kısmen teslim edilen siparişler</li>
-        <li>Hatalı veya gizli profil linki verilmesi</li>
-        <li>Platform kurallarına aykırı kullanım</li>
-      </ul>
-      <p>İade talepleri {SITE.email} veya panel destek üzerinden değerlendirilir.</p>
     </LegalPage>
   )
 }

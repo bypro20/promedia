@@ -12,6 +12,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '', '/hizmetler', '/blog', '/ucretsiz-araclar', '/giris', '/kayit',
     '/siparis-sorgula', '/telafi-talebi', '/sepet', '/hakkimizda', '/iletisim',
     '/kvkk', '/iade-kosullari', '/kullanim-sozlesmesi',
+    '/gizlilik-sozlesmesi', '/mesafeli-satis-sozlesmesi', '/teslimat-iade-sartlari',
+    '/ssl-sertifikasi', '/on-bilgilendirme-formu',
   ]
 
   return [

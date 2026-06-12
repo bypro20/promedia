@@ -1,4 +1,5 @@
 import { getSmmProvider } from './providers'
+import { assertSmmApiOk, readSmmApiJson } from './api-response'
 import type {
   SmmAction,
   SmmAddResponse,
@@ -37,12 +38,10 @@ async function smmRequest<T>(
     cache: 'no-store',
   })
 
-  if (!res.ok) {
-    throw new Error(`SMM API HTTP ${res.status}`)
-  }
+  const data = await readSmmApiJson(res)
+  assertSmmApiOk(res, data)
 
-  const data = (await res.json()) as T
-  return data
+  return data as T
 }
 
 export async function fetchSmmServices(providerId = 'default'): Promise<SmmService[]> {

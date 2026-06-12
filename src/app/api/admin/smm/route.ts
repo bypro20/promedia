@@ -17,7 +17,10 @@ import {
   type MarkupConfig,
   type ServiceMapEntry,
 } from '@/lib/smm/service-map-store'
-import { getConfiguredPanelIds, getSmmProviders, isSmmConfigured, SMM_PANEL_PRESETS } from '@/lib/smm/providers'
+import { getConfiguredPanelIds, getSmmProviders, isDemoMode, isSmmConfigured, SMM_PANEL_PRESETS } from '@/lib/smm/providers'
+import { testSmmKey, validateKeyFormat } from '@/lib/smm/key-validator'
+import { getPanelKeyHelp } from '@/lib/smm/panel-key-help'
+import { buildWholesaleOverview } from '@/lib/smm/wholesale-overview'
 
 export async function GET() {
   try {
@@ -35,6 +38,10 @@ export async function GET() {
       site: p.apiUrl.replace('/api/v2', ''),
       minDeposit: p.minDeposit,
       note: p.note,
+      keyVisibility: p.keyVisibility ?? 'masked_once',
+      recommended: p.recommended ?? false,
+      providerTier: p.providerTier ?? 'reseller',
+      keyHelp: getPanelKeyHelp(p.id),
       savedInDb: saved[p.envKey] ?? false,
       fromEnv: Boolean(process.env[p.envKey]),
       configured: getConfiguredPanelIds().includes(p.id),
@@ -48,15 +55,20 @@ export async function GET() {
       const providers = getSmmProviders()
       const balanceResults = await Promise.allSettled(
         providers.map(async (p) => {
-          const b = await fetchSmmBalance(p.id)
-          return { id: p.id, name: p.name, balance: b.balance, currency: b.currency, ok: true }
+          try {
+            const b = await fetchSmmBalance(p.id)
+            return { id: p.id, name: p.name, balance: b.balance, currency: b.currency, ok: true as const }
+          } catch (err) {
+            return {
+              id: p.id,
+              name: p.name,
+              ok: false as const,
+              error: err instanceof Error ? err.message : 'Bakiye alınamadı',
+            }
+          }
         })
       )
-      balances = balanceResults.map((b, i) =>
-        b.status === 'fulfilled'
-          ? b.value
-          : { id: providers[i].id, name: providers[i].name, ok: false, error: 'Bakiye alınamadı' }
-      )
+      balances = balanceResults.map((b) => (b.status === 'fulfilled' ? b.value : { id: '', name: '', ok: false, error: 'Bakiye alınamadı' }))
       try {
         providerSummary = await listProviderSummary()
       } catch {
@@ -91,6 +103,14 @@ export async function GET() {
     const mappedCount = services.filter((s) => s.mapped).length
     const totalCount = services.length
 
+    const wholesaleOverview = await buildWholesaleOverview({
+      map,
+      markup,
+      configuredIds: getConfiguredPanelIds(),
+      balances,
+      demoMode: isDemoMode(),
+    })
+
     return NextResponse.json({
       ok: true,
       configured,
@@ -98,6 +118,7 @@ export async function GET() {
       balances,
       providerSummary,
       markup,
+      wholesaleOverview,
       mapStats: { mapped: mappedCount, total: totalCount, unmapped: totalCount - mappedCount },
       services,
     })
@@ -108,6 +129,12 @@ export async function GET() {
 
 const saveKeySchema = z.object({
   action: z.literal('save_key'),
+  envKey: z.string(),
+  apiKey: z.string(),
+})
+
+const testKeySchema = z.object({
+  action: z.literal('test_key'),
   envKey: z.string(),
   apiKey: z.string(),
 })
@@ -135,6 +162,7 @@ const saveMarkupSchema = z.object({
     usdTry: z.number().min(1),
     autoCheapest: z.boolean(),
     preferTurkish: z.boolean(),
+    preferWholesale: z.boolean(),
     minProfitPercent: z.number().min(0).max(90),
     tierMultipliers: z.record(z.string(), z.number()),
   }),
@@ -152,10 +180,48 @@ export async function POST(req: Request) {
     const body = await req.json()
     const action = body.action as string
 
+    if (action === 'test_key') {
+      const data = testKeySchema.parse(body)
+      const preset = SMM_PANEL_PRESETS.find((p) => p.envKey === data.envKey)
+      if (!preset) return NextResponse.json({ ok: false, error: 'Geçersiz panel' }, { status: 400 })
+
+      const format = validateKeyFormat(data.apiKey)
+      if (!format.ok) {
+        return NextResponse.json({ ok: false, error: format.reason, test: { ok: false, error: format.reason } })
+      }
+
+      const test = await testSmmKey(preset.apiUrl, data.apiKey)
+      if (!test.ok) {
+        return NextResponse.json({ ok: false, error: test.error, test })
+      }
+
+      return NextResponse.json({
+        ok: true,
+        message: `Key geçerli — bakiye: ${test.balance ?? '?'} ${test.currency ?? ''}${test.serviceCount ? ` · ${test.serviceCount} servis` : ''}`,
+        test,
+      })
+    }
+
     if (action === 'save_key') {
       const data = saveKeySchema.parse(body)
       const preset = SMM_PANEL_PRESETS.find((p) => p.envKey === data.envKey)
       if (!preset) return NextResponse.json({ ok: false, error: 'Geçersiz panel' }, { status: 400 })
+
+      if (data.apiKey) {
+        const format = validateKeyFormat(data.apiKey)
+        if (!format.ok) {
+          return NextResponse.json({ ok: false, error: format.reason }, { status: 400 })
+        }
+
+        const test = await testSmmKey(preset.apiUrl, data.apiKey)
+        if (!test.ok) {
+          return NextResponse.json({
+            ok: false,
+            error: `Key panel tarafından reddedildi: ${test.error}. Yıldızlı metin veya eski key olabilir — panelden yeni key oluşturun.`,
+            test,
+          }, { status: 400 })
+        }
+      }
 
       await saveSmmKey(data.envKey, data.apiKey)
       clearServiceCache()
@@ -185,9 +251,7 @@ export async function POST(req: Request) {
       autoMapSchema.parse(body)
       await ensureSmmKeyCache()
       const result = await autoMapAllServices()
-      const existing = await loadServiceMap()
-      const merged = { ...existing, ...result.entries }
-      await saveServiceMap(merged)
+      await saveServiceMap(result.entries)
       clearServiceCache()
 
       return NextResponse.json({

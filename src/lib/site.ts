@@ -3,9 +3,9 @@ export const SITE = {
   tagline: 'Sosyal medyada profesyonel büyüme',
   description:
     'Instagram, TikTok, YouTube ve daha fazlası için takipçi, beğeni ve izlenme hizmetleri. Güvenli ödeme, hızlı teslimat, telafi garantisi.',
-  url: 'https://promedia-kappa.vercel.app',
-  email: 'destek@promedia.com.tr',
-  whatsapp: '905001234567',
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://prmdia.com',
+  email: process.env.SITE_EMAIL ?? 'destek@prmdia.com',
+  whatsapp: '905051236824',
   supportHours: '7/24',
 } as const
 

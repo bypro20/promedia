@@ -7,7 +7,7 @@ import { prisma } from '@/lib/db'
 
 const depositSchema = z.object({
   amount: z.number().min(10),
-  method: z.enum(['havale', 'papara', 'eft']).default('havale'),
+  method: z.enum(['havale', 'eft']).default('havale'),
   reference: z.string().max(200).optional(),
 })
 

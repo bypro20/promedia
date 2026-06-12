@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { createSession, toSessionUser } from '@/lib/auth'
+import { googleOAuthCallbackUrl } from '@/lib/google-oauth-config'
 import { getSiteOrigin } from '@/lib/site-url'
 
 const GOOGLE_AUTH = 'https://accounts.google.com/o/oauth2/v2/auth'
@@ -15,7 +16,7 @@ function googleConfig(origin?: string) {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
   const baseUrl = origin ?? getSiteOrigin()
   if (!clientId || !clientSecret) return null
-  return { clientId, clientSecret, redirectUri: `${baseUrl}/api/auth/google/callback` }
+  return { clientId, clientSecret, redirectUri: googleOAuthCallbackUrl(baseUrl) }
 }
 
 export function getGoogleAuthUrl(state: string, origin?: string) {

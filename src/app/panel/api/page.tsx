@@ -12,7 +12,7 @@ const ENDPOINTS = [
 export default function PanelApiPage() {
   const [keys, setKeys] = useState<Array<{ id: string; key: string; label: string | null }>>([])
   const [label, setLabel] = useState('API Key')
-  const base = typeof window !== 'undefined' ? window.location.origin : 'https://promedia-kappa.vercel.app'
+  const base = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://prmdia.com')
 
   function load() {
     void fetch('/api/panel/api-keys').then((r) => r.json()).then((d) => { if (d.ok) setKeys(d.keys) })

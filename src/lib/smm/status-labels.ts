@@ -6,5 +6,6 @@ export const STATUS_LABELS: Record<string, string> = {
   partial: 'Kısmi Teslim',
   cancelled: 'İptal',
   failed: 'Başarısız',
+  awaiting_panel_balance: 'Toptan bakiye bekleniyor',
   refunded: 'İade',
 }

@@ -34,19 +34,50 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [deposits, setDeposits] = useState<Deposit[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  async function loadStats() {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/admin/stats', { cache: 'no-store' })
+      const d = await res.json()
+      if (!res.ok || !d.ok) {
+        setError(d.error ?? 'Veriler yüklenemedi')
+        return
+      }
+      setStats(d.stats)
+      setOrders(d.recentOrders)
+      setDeposits(d.pendingDeposits)
+    } catch {
+      setError('Bağlantı hatası — lütfen tekrar deneyin')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    void fetch('/api/admin/stats').then((r) => r.json()).then((d) => {
-      if (d.ok) {
-        setStats(d.stats)
-        setOrders(d.recentOrders)
-        setDeposits(d.pendingDeposits)
-      }
-    })
+    void loadStats()
   }, [])
 
-  if (!stats) {
+  if (loading) {
     return <main className="p-8 text-sm text-[#666F94]">Yükleniyor…</main>
+  }
+
+  if (error || !stats) {
+    return (
+      <main className="p-8">
+        <p className="text-sm text-red-600">{error ?? 'Veriler yüklenemedi'}</p>
+        <button
+          type="button"
+          onClick={() => void loadStats()}
+          className="mt-3 rounded-xl bg-[#7844E4] px-4 py-2 text-sm font-bold text-white hover:bg-[#6835d3]"
+        >
+          Tekrar dene
+        </button>
+      </main>
+    )
   }
 
   const cards = [

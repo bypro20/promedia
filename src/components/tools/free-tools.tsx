@@ -117,7 +117,7 @@ const BIO_TEMPLATES = [
 export function BioTool() {
   const [niche, setNiche] = useState('Lifestyle')
   const [cta, setCta] = useState('Link için tıkla')
-  const [link, setLink] = useState('promedia.com')
+  const [link, setLink] = useState('prmdia.com')
   const [idx, setIdx] = useState(0)
 
   const bio = BIO_TEMPLATES[idx]
@@ -236,7 +236,7 @@ export function FreeTrialTool() {
     <div className="rounded-xl bg-[#EDE5FF] p-6 text-center">
       <p className="text-lg font-bold text-[#33353E]">Ücretsiz deneme için kayıt olun</p>
       <p className="mt-2 text-sm text-[#666F94]">
-        Demo modda küçük paketlerle sistemi test edin. Gerçek teslimat için admin panelden SMM key tanımlanır.
+        Kayıt olun ve 100 takipçilik başlangıç paketini hemen satın alın. Tüm paketler fiyatlarıyla birlikte listelenir.
       </p>
       <div className="mt-4 flex flex-wrap justify-center gap-3">
         <a href="/kayit" className="rounded-xl bg-[#7844E4] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#6835d3]">Ücretsiz Kayıt</a>

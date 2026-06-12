@@ -19,6 +19,8 @@ export type MarkupConfig = {
   preferTurkish: boolean
   minProfitPercent: number
   tierMultipliers: Record<PackageTier, number>
+  /** Toptancı API'leri (PRM4U vb.) eşlemede önceliklendir */
+  preferWholesale: boolean
 }
 
 const MAP_KEY = 'smm_service_map'
@@ -28,13 +30,14 @@ export const DEFAULT_MARKUP: MarkupConfig = {
   enabled: true,
   usdTry: Number(process.env.SMM_USD_TRY ?? 35),
   autoCheapest: true,
-  preferTurkish: true,
-  minProfitPercent: 40,
+  preferTurkish: false,
+  preferWholesale: true,
+  minProfitPercent: 45,
   tierMultipliers: {
-    ucuz: 3.5,
-    standart: 2.8,
-    premium: 2.2,
-    gercek: 1.9,
+    ucuz: 3.2,
+    standart: 2.6,
+    premium: 2.1,
+    gercek: 1.85,
   },
 }
 
@@ -49,7 +52,11 @@ function mapKey(slug: string, tierId: PackageTier) {
 export async function loadServiceMap(): Promise<Record<string, ServiceMapEntry>> {
   if (mapCache && Date.now() - loadedAt < 30_000) return mapCache
   const row = await prisma.siteSetting.findUnique({ where: { key: MAP_KEY } })
-  mapCache = row ? (JSON.parse(row.value) as Record<string, ServiceMapEntry>) : {}
+  try {
+    mapCache = row ? (JSON.parse(row.value) as Record<string, ServiceMapEntry>) : {}
+  } catch {
+    mapCache = {}
+  }
   loadedAt = Date.now()
   return mapCache
 }
@@ -78,7 +85,15 @@ export async function setMappedEntry(slug: string, tierId: PackageTier, entry: S
 export async function loadMarkupConfig(): Promise<MarkupConfig> {
   if (markupCache && Date.now() - loadedAt < 30_000) return markupCache
   const row = await prisma.siteSetting.findUnique({ where: { key: MARKUP_KEY } })
-  const config: MarkupConfig = row ? { ...DEFAULT_MARKUP, ...JSON.parse(row.value) } : { ...DEFAULT_MARKUP }
+  let parsed: Partial<MarkupConfig> = {}
+  if (row) {
+    try {
+      parsed = JSON.parse(row.value) as Partial<MarkupConfig>
+    } catch {
+      parsed = {}
+    }
+  }
+  const config: MarkupConfig = row ? { ...DEFAULT_MARKUP, ...parsed } : { ...DEFAULT_MARKUP }
   markupCache = config
   return config
 }

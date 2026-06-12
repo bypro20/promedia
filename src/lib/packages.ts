@@ -1,3 +1,5 @@
+import { minTicketPrice } from './min-ticket-price'
+
 export type PackageTier = 'ucuz' | 'standart' | 'premium' | 'gercek'
 
 export type FollowerPackage = {
@@ -59,7 +61,7 @@ const SAVINGS: Record<number, number> = {
 
 function calcPrice(amount: number, basePer1k: number, discount = 1): number {
   const raw = (amount / 1000) * basePer1k * discount
-  const min = amount <= 50 ? 9.9 : amount <= 100 ? 14.9 : amount <= 250 ? 24.9 : 39.9
+  const min = minTicketPrice(amount)
   return Math.round(Math.max(min, raw * (amount < 1000 ? 1.12 : 1)) * 100) / 100 - 0.03
 }
 
