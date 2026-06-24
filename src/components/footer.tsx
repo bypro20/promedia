@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { PLATFORM_SERVICES } from '@/lib/catalog'
 import { LEGAL_LINKS } from '@/lib/legal-config'
 import { SITE } from '@/lib/site-config'
-import { PaymentTrustBar } from '@/components/payment-trust-bar'
 
 export function Footer() {
   return (
@@ -63,9 +62,7 @@ export function Footer() {
         <p className="mt-10 border-t border-white/10 pt-8 text-center text-xs text-white/40">
           ProMedia 2024–{new Date().getFullYear()} © Tüm hakları saklıdır.
         </p>
-        <div className="mt-8 pb-4">
-          <PaymentTrustBar variant="dark" />
-        </div>
+
       </div>
     </footer>
   )
